@@ -21,7 +21,9 @@ TypoCorrector _$TypoCorrectorFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$TypoCorrector {
   String get correct => throw _privateConstructorUsedError;
+  set correct(String value) => throw _privateConstructorUsedError;
   List<String> get typos => throw _privateConstructorUsedError;
+  set typos(List<String> value) => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -98,7 +100,7 @@ class __$$TypoCorrectorImplCopyWithImpl<$Res>
           : correct // ignore: cast_nullable_to_non_nullable
               as String,
       typos: null == typos
-          ? _value._typos
+          ? _value.typos
           : typos // ignore: cast_nullable_to_non_nullable
               as List<String>,
     ));
@@ -108,41 +110,20 @@ class __$$TypoCorrectorImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$TypoCorrectorImpl implements _TypoCorrector {
-  _$TypoCorrectorImpl(
-      {required this.correct, required final List<String> typos})
-      : _typos = typos;
+  _$TypoCorrectorImpl({required this.correct, required this.typos});
 
   factory _$TypoCorrectorImpl.fromJson(Map<String, dynamic> json) =>
       _$$TypoCorrectorImplFromJson(json);
 
   @override
-  final String correct;
-  final List<String> _typos;
+  String correct;
   @override
-  List<String> get typos {
-    if (_typos is EqualUnmodifiableListView) return _typos;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_typos);
-  }
+  List<String> typos;
 
   @override
   String toString() {
     return 'TypoCorrector(correct: $correct, typos: $typos)';
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$TypoCorrectorImpl &&
-            (identical(other.correct, correct) || other.correct == correct) &&
-            const DeepCollectionEquality().equals(other._typos, _typos));
-  }
-
-  @JsonKey(ignore: true)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType, correct, const DeepCollectionEquality().hash(_typos));
 
   @JsonKey(ignore: true)
   @override
@@ -160,16 +141,18 @@ class _$TypoCorrectorImpl implements _TypoCorrector {
 
 abstract class _TypoCorrector implements TypoCorrector {
   factory _TypoCorrector(
-      {required final String correct,
-      required final List<String> typos}) = _$TypoCorrectorImpl;
+      {required String correct,
+      required List<String> typos}) = _$TypoCorrectorImpl;
 
   factory _TypoCorrector.fromJson(Map<String, dynamic> json) =
       _$TypoCorrectorImpl.fromJson;
 
   @override
   String get correct;
+  set correct(String value);
   @override
   List<String> get typos;
+  set typos(List<String> value);
   @override
   @JsonKey(ignore: true)
   _$$TypoCorrectorImplCopyWith<_$TypoCorrectorImpl> get copyWith =>

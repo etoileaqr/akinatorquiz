@@ -1,6 +1,7 @@
-import 'package:akinatorquiz/quiz_data.dart';
+import 'package:sqflite/sqflite.dart';
 
-import 'model/typo_corrector.dart';
+import '../model/city.dart';
+import '../model/typo_corrector.dart';
 
 class AppData {
   // シングルトンインスタンスを保持する静的な変数
@@ -15,7 +16,8 @@ class AppData {
   // インスタンス生成時に使用されるプライベートな名前付きコンストラクタ
   AppData._internal();
 
+  Database? sDb;
   List<String> cities = [];
   List<TypoCorrector> typoCorrectors = [];
-  QuizData qd = const QuizData(city: '東京');
+  City? city;
 }

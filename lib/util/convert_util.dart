@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-import '../app_data.dart';
+import '../dto/app_data.dart';
 import '../model/typo_corrector.dart';
 
 class ConvertUtil {

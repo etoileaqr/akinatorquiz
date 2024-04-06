@@ -5,7 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part '_generated/typo_corrector.freezed.dart';
 part '_generated/typo_corrector.g.dart';
 
-@freezed
+@unfreezed
 class TypoCorrector with _$TypoCorrector {
   factory TypoCorrector({
     required String correct,

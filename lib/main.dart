@@ -2,9 +2,10 @@ import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'app_data.dart';
+import 'dto/app_data.dart';
 import 'util/file_util.dart';
 import 'model/typo_corrector.dart';
+import 'util/sqlite_util.dart';
 import 'view/home.dart';
 
 void main() async {
@@ -14,13 +15,24 @@ void main() async {
 }
 
 Future<void> initialize() async {
+  // こっちはFirebaseで管理する
   Iterable typoJson = await FileUtil.loadJson('assets/dev/typos.json');
   AppData.instance.typoCorrectors =
       typoJson.map((data) => TypoCorrector.fromJson(data)).toList();
   AppData.instance.cities = await FileUtil.getCities();
+
+  // こっちはsqliteで管理する
+  AppData.instance.sDb = await SqliteUtil.createTables(sqls: {
+    'assets/sql/CREATE_CITIES.sql',
+    'assets/sql/CREATE_POSTS.sql',
+  });
+
+  // 開発用にいつでも消せるような処理を入れておく
+  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS cities");
+  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS posts");
 }
 
-// gitに公開するので実際のトークンは伏せておきます。
+/* gitに公開するので実際のトークンは伏せておきます。 */
 const token = 'Actual TOKEN is supposed to be written here';
 final openAI = OpenAI.instance.build(
   token: token,
@@ -32,7 +44,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -56,7 +68,9 @@ class SplashScreen extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () {
             Navigator.of(context).push(
-              CupertinoPageRoute(builder: (context) => const Home()),
+              CupertinoPageRoute(
+                builder: (context) => const Home(),
+              ),
             );
           },
           child: const Text('ホーム画面へ遷移'),
@@ -66,6 +80,8 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
+
+// speech to text をテキトーに調べたときの残骸
 // class MyHomePage extends StatefulWidget {
 //   const MyHomePage({super.key});
 

@@ -2,16 +2,18 @@ import 'dart:math';
 
 class DevUtil {
   static Stream<String> getFakeChatGptResponse() async* {
+    String str = '';
     for (String word in chatGptResponseWords) {
       final random = Random();
-      int s = random.nextInt(2000);
+      int s = random.nextInt(500);
       await Future.delayed(Duration(milliseconds: s));
-      yield word;
+      str += word;
+      yield str;
     }
   }
 
   static const List<String> chatGptResponseWords = [
-    "はい",
+    "はい、",
     "オタワ",
     "は",
     "カナダ",
