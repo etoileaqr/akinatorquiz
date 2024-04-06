@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'dto/app_data.dart';
 import 'util/file_util.dart';
 import 'model/typo_corrector.dart';
-import 'util/sqlite_util.dart';
-import 'view/home.dart';
+
+import 'view/home2.dart';
 
 void main() async {
   runApp(const MyApp());
@@ -21,13 +21,13 @@ Future<void> initialize() async {
       typoJson.map((data) => TypoCorrector.fromJson(data)).toList();
   AppData.instance.cities = await FileUtil.getCities();
 
-  // こっちはsqliteで管理する
-  AppData.instance.sDb = await SqliteUtil.createTables(sqls: {
-    'assets/sql/CREATE_CITIES.sql',
-    'assets/sql/CREATE_POSTS.sql',
-  });
+  // // こっちはsqliteで管理する
+  // AppData.instance.sDb = await SqliteUtil.createTables(sqls: {
+  //   'assets/sql/CREATE_CITIES.sql',
+  //   'assets/sql/CREATE_POSTS.sql',
+  // });
 
-  // 開発用にいつでも消せるような処理を入れておく
+  // // 開発用にいつでも消せるような処理を入れておく
   // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS cities");
   // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS posts");
 }
@@ -69,7 +69,7 @@ class SplashScreen extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).push(
               CupertinoPageRoute(
-                builder: (context) => const Home(),
+                builder: (context) => const Home2(),
               ),
             );
           },

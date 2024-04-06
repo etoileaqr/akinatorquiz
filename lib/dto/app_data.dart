@@ -1,6 +1,4 @@
-import 'package:sqflite/sqflite.dart';
-
-import '../model/city.dart';
+import '../model/post.dart';
 import '../model/typo_corrector.dart';
 
 class AppData {
@@ -16,8 +14,11 @@ class AppData {
   // インスタンス生成時に使用されるプライベートな名前付きコンストラクタ
   AppData._internal();
 
-  Database? sDb;
+  // Database? sDb;
   List<String> cities = [];
   List<TypoCorrector> typoCorrectors = [];
-  City? city;
+  // City? city;
+  String city = '';
+  List<Post> posts = [];
+  bool alreadyLoaded = false;
 }

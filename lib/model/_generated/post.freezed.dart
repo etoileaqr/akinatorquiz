@@ -20,16 +20,15 @@ Post _$PostFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Post {
-  int? get postId => throw _privateConstructorUsedError;
-  set postId(int? value) => throw _privateConstructorUsedError;
-  int get cityId => throw _privateConstructorUsedError;
-  set cityId(int value) => throw _privateConstructorUsedError;
-  String get city => throw _privateConstructorUsedError;
-  set city(String value) => throw _privateConstructorUsedError;
-  String get post => throw _privateConstructorUsedError;
+// int? postId,
+// required int cityId,
+// required String city,
+  String get post => throw _privateConstructorUsedError; // int? postId,
+// required int cityId,
+// required String city,
   set post(String value) => throw _privateConstructorUsedError;
-  int get isChatGpt => throw _privateConstructorUsedError;
-  set isChatGpt(int value) => throw _privateConstructorUsedError;
+  bool get isChatGpt => throw _privateConstructorUsedError;
+  set isChatGpt(bool value) => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -41,7 +40,7 @@ abstract class $PostCopyWith<$Res> {
   factory $PostCopyWith(Post value, $Res Function(Post) then) =
       _$PostCopyWithImpl<$Res, Post>;
   @useResult
-  $Res call({int? postId, int cityId, String city, String post, int isChatGpt});
+  $Res call({String post, bool isChatGpt});
 }
 
 /// @nodoc
@@ -57,25 +56,10 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? postId = freezed,
-    Object? cityId = null,
-    Object? city = null,
     Object? post = null,
     Object? isChatGpt = null,
   }) {
     return _then(_value.copyWith(
-      postId: freezed == postId
-          ? _value.postId
-          : postId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      cityId: null == cityId
-          ? _value.cityId
-          : cityId // ignore: cast_nullable_to_non_nullable
-              as int,
-      city: null == city
-          ? _value.city
-          : city // ignore: cast_nullable_to_non_nullable
-              as String,
       post: null == post
           ? _value.post
           : post // ignore: cast_nullable_to_non_nullable
@@ -83,7 +67,7 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
       isChatGpt: null == isChatGpt
           ? _value.isChatGpt
           : isChatGpt // ignore: cast_nullable_to_non_nullable
-              as int,
+              as bool,
     ) as $Val);
   }
 }
@@ -95,7 +79,7 @@ abstract class _$$PostImplCopyWith<$Res> implements $PostCopyWith<$Res> {
       __$$PostImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int? postId, int cityId, String city, String post, int isChatGpt});
+  $Res call({String post, bool isChatGpt});
 }
 
 /// @nodoc
@@ -108,25 +92,10 @@ class __$$PostImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? postId = freezed,
-    Object? cityId = null,
-    Object? city = null,
     Object? post = null,
     Object? isChatGpt = null,
   }) {
     return _then(_$PostImpl(
-      postId: freezed == postId
-          ? _value.postId
-          : postId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      cityId: null == cityId
-          ? _value.cityId
-          : cityId // ignore: cast_nullable_to_non_nullable
-              as int,
-      city: null == city
-          ? _value.city
-          : city // ignore: cast_nullable_to_non_nullable
-              as String,
       post: null == post
           ? _value.post
           : post // ignore: cast_nullable_to_non_nullable
@@ -134,7 +103,7 @@ class __$$PostImplCopyWithImpl<$Res>
       isChatGpt: null == isChatGpt
           ? _value.isChatGpt
           : isChatGpt // ignore: cast_nullable_to_non_nullable
-              as int,
+              as bool,
     ));
   }
 }
@@ -142,30 +111,22 @@ class __$$PostImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$PostImpl implements _Post {
-  _$PostImpl(
-      {this.postId,
-      required this.cityId,
-      required this.city,
-      required this.post,
-      required this.isChatGpt});
+  _$PostImpl({required this.post, required this.isChatGpt});
 
   factory _$PostImpl.fromJson(Map<String, dynamic> json) =>
       _$$PostImplFromJson(json);
 
-  @override
-  int? postId;
-  @override
-  int cityId;
-  @override
-  String city;
+// int? postId,
+// required int cityId,
+// required String city,
   @override
   String post;
   @override
-  int isChatGpt;
+  bool isChatGpt;
 
   @override
   String toString() {
-    return 'Post(postId: $postId, cityId: $cityId, city: $city, post: $post, isChatGpt: $isChatGpt)';
+    return 'Post(post: $post, isChatGpt: $isChatGpt)';
   }
 
   @JsonKey(ignore: true)
@@ -183,30 +144,20 @@ class _$PostImpl implements _Post {
 }
 
 abstract class _Post implements Post {
-  factory _Post(
-      {int? postId,
-      required int cityId,
-      required String city,
-      required String post,
-      required int isChatGpt}) = _$PostImpl;
+  factory _Post({required String post, required bool isChatGpt}) = _$PostImpl;
 
   factory _Post.fromJson(Map<String, dynamic> json) = _$PostImpl.fromJson;
 
-  @override
-  int? get postId;
-  set postId(int? value);
-  @override
-  int get cityId;
-  set cityId(int value);
-  @override
-  String get city;
-  set city(String value);
-  @override
-  String get post;
+  @override // int? postId,
+// required int cityId,
+// required String city,
+  String get post; // int? postId,
+// required int cityId,
+// required String city,
   set post(String value);
   @override
-  int get isChatGpt;
-  set isChatGpt(int value);
+  bool get isChatGpt;
+  set isChatGpt(bool value);
   @override
   @JsonKey(ignore: true)
   _$$PostImplCopyWith<_$PostImpl> get copyWith =>

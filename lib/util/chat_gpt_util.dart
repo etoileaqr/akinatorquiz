@@ -11,13 +11,13 @@ class ChatGptUtil {
   static String formatWhenQuestion({required String q}) {
     /* 「その都市」という言葉が質問の中に入っていたら、
       正解の都市名に変換してchatGPTに投げることにする */
-    q = q.replaceAll("その都市", AppData.instance.city!.city);
+    q = q.replaceAll("その都市", AppData.instance.city);
     return q;
   }
 
   /// chatGPTからの返事に都市名が入っていた場合は、「その都市」に置換して返す
   static String formatWhenAnswer({required String reply}) {
-    reply = reply.replaceAll(AppData.instance.city!.city, "その都市");
+    reply = reply.replaceAll(AppData.instance.city, "その都市");
     return reply;
   }
 }

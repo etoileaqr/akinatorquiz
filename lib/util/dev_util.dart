@@ -3,6 +3,7 @@ import 'dart:math';
 class DevUtil {
   static Stream<String> getFakeChatGptResponse() async* {
     String str = '';
+    yield str;
     for (String word in chatGptResponseWords) {
       final random = Random();
       int s = random.nextInt(500);
@@ -19,6 +20,13 @@ class DevUtil {
     "カナダ",
     "の",
     "首都",
-    "です。"
+    "です。",
+    "はい、",
+    "オタワ",
+    "は",
+    "カナダ",
+    "の",
+    "首都",
+    "です。",
   ];
 }

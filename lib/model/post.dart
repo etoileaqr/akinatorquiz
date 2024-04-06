@@ -8,11 +8,11 @@ part '_generated/post.g.dart';
 @unfreezed
 class Post with _$Post {
   factory Post({
-    int? postId,
-    required int cityId,
-    required String city,
+    // int? postId,
+    // required int cityId,
+    // required String city,
     required String post,
-    required int isChatGpt,
+    required bool isChatGpt,
   }) = _Post;
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
