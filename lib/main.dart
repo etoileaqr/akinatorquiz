@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'dto/app_data.dart';
 import 'util/file_util.dart';
 import 'model/typo_corrector.dart';
-
-import 'view/home2.dart';
+import 'view/play_view.dart';
 
 void main() async {
   runApp(const MyApp());
@@ -69,7 +68,7 @@ class SplashScreen extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).push(
               CupertinoPageRoute(
-                builder: (context) => const Home2(),
+                builder: (context) => const PlayView(),
               ),
             );
           },
