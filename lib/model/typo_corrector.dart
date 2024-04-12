@@ -1,17 +1,29 @@
 // ignore_for_file: unnecessary_this
 
-import 'package:freezed_annotation/freezed_annotation.dart';
+import '../dto/app_data.dart';
 
-part '_generated/typo_corrector.freezed.dart';
-part '_generated/typo_corrector.g.dart';
+class TypoCorrector {
+  /* Fields */
+  final String correct;
+  final List<String> typos;
 
-@unfreezed
-class TypoCorrector with _$TypoCorrector {
-  factory TypoCorrector({
-    required String correct,
-    required List<String> typos,
-  }) = _TypoCorrector;
+  /* Constructors */
+  TypoCorrector({required this.correct, required this.typos});
 
-  factory TypoCorrector.fromJson(Map<String, dynamic> json) =>
-      _$TypoCorrectorFromJson(json);
+  /// TypoCorrectorをJsonからデコードするConstructor
+  TypoCorrector.fromJson(Map<String, dynamic> json)
+      : this.correct = json['correct'] as String? ?? '',
+        this.typos = json['typos'] as List<String>;
+
+  /* Methods */
+  /// 音声認識で発生する誤字を修正する
+  static String convertTypo({required String str}) {
+    // 誤字を修正する（例：統計→東経）
+    for (TypoCorrector corrector in AppData.instance.typoCorrectors) {
+      for (String typo in corrector.typos) {
+        str = str.replaceAll(typo, corrector.correct);
+      }
+    }
+    return str;
+  }
 }

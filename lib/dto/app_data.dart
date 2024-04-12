@@ -1,5 +1,8 @@
-import '../model/post.dart';
+import '../main.dart';
+import '../model/item.dart';
 import '../model/typo_corrector.dart';
+import '../model/dictionary.dart';
+import '../model/post.dart';
 
 class AppData {
   // シングルトンインスタンスを保持する静的な変数
@@ -14,11 +17,26 @@ class AppData {
   // インスタンス生成時に使用されるプライベートな名前付きコンストラクタ
   AppData._internal();
 
-  // Database? sDb;
-  List<String> cities = [];
   List<TypoCorrector> typoCorrectors = [];
-  // City? city;
-  String city = '';
-  List<Post> posts = [];
+  Post? yourPost;
   bool alreadyLoaded = false;
+
+  Map<String, Dictionary> dictMap = {};
+  Map<String, List<String>> genreMap = {};
+  Map<String, Map<String, List<Item>>> itemMap = {};
+  String scope = '';
+  String answer = '東京';
+  List<Post> posts = [];
+
+  /* genre */
+  String get genre => prefs.getString('genre') ?? 'subjects';
+  set genre(String value) {
+    prefs.setString('genre', value);
+  }
+
+  /* category */
+  String get category => prefs.getString('category') ?? 'world_cities';
+  set category(String value) {
+    prefs.setString('category', value);
+  }
 }

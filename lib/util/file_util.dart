@@ -18,14 +18,4 @@ class FileUtil {
     Iterable jsonResponse = json.decode(jsonData);
     return jsonResponse;
   }
-
-  static Future<List<String>> getCities() async {
-    List<List<String>> citiesCsv = await loadCsv('assets/dev/cities.csv');
-    List<String> list = [];
-    for (List<String> row in citiesCsv) {
-      list.add(row[1]);
-    }
-    list.removeAt(0);
-    return list;
-  }
 }

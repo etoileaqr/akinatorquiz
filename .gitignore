@@ -28,3 +28,14 @@ doc/api/
 
 !*.gitignore
 .DS_Store
+
+# Firebase関連
+firebase_options.dart
+.firebaserc
+firebase.json
+firepit-log.txt
+firestore.indexes.json
+firestore.rules
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist

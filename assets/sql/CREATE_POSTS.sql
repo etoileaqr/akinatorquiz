@@ -1,9 +1,10 @@
 CREATE TABLE IF NOT EXISTS posts(
-    postId INTEGER PRIMARY KEY AUTOINCREMENT,
-    cityId INTEGER,
-    city TEXT,
-    post TEXT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    genre TEXT,
+    category TEXT,
+    scope TEXT,
+    answer TEXT,
+    content TEXT,
     isChatGpt INTEGER,
-    FOREIGN KEY (cityId) REFERENCES cities(id),
-    FOREIGN KEY (city) REFERENCES cities(city)
+    postTime TEXT
 )

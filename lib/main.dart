@@ -1,42 +1,73 @@
-import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'package:sqflite/sqflite.dart';
+import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'firebase_options.dart';
+
 import 'dto/app_data.dart';
+import 'manager/firestore_manager.dart';
 import 'util/file_util.dart';
 import 'model/typo_corrector.dart';
+import 'manager/sqlite_util.dart';
 import 'view/play_view.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  prefs = await SharedPreferences.getInstance();
+  await firestoreInitialize();
+
   runApp(const MyApp());
 
-  await initialize();
+  await sqliteInitialize();
 }
 
-Future<void> initialize() async {
-  // こっちはFirebaseで管理する
-  Iterable typoJson = await FileUtil.loadJson('assets/dev/typos.json');
-  AppData.instance.typoCorrectors =
-      typoJson.map((data) => TypoCorrector.fromJson(data)).toList();
-  AppData.instance.cities = await FileUtil.getCities();
-
-  // // こっちはsqliteで管理する
-  // AppData.instance.sDb = await SqliteUtil.createTables(sqls: {
-  //   'assets/sql/CREATE_CITIES.sql',
-  //   'assets/sql/CREATE_POSTS.sql',
-  // });
-
-  // // 開発用にいつでも消せるような処理を入れておく
-  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS cities");
-  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS posts");
-}
-
+/* SharedPreferencesのinstance */
+late SharedPreferences prefs;
+/* Firebase.Firestoreのinstance */
+final firestore = FirebaseFirestore.instance;
+/* SQLiteのインスタンス */
+Database? sqliteDb;
 /* gitに公開するので実際のトークンは伏せておきます。 */
 const token = 'Actual TOKEN is supposed to be written here';
 final openAI = OpenAI.instance.build(
   token: token,
   baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 20)),
 );
+
+Future<void> firestoreInitialize() async {
+  //TODO 実際はFirebaseで管理する予定
+  Iterable typoJson = await FileUtil.loadJson('assets/dev/typos.json');
+  AppData.instance.typoCorrectors =
+      typoJson.map((data) => TypoCorrector.fromJson(data)).toList();
+
+  AppData.instance.dictMap = await FirestoreManager.getDictionary();
+  AppData.instance.genreMap = await FirestoreManager.getGenreMap();
+  AppData.instance.itemMap =
+      await FirestoreManager.getItemMap(genreMap: AppData.instance.genreMap);
+}
+
+Future<void> sqliteInitialize() async {
+  // テーブル作成
+  sqliteDb = await SqliteManager.createTables(sqls: {
+    // 'assets/sql/CREATE_CITIES.sql',
+    'assets/sql/CREATE_POSTS.sql',
+  });
+
+  // // 開発用にいつでも消せるような処理を入れておく
+  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS cities");
+  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS posts");
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
