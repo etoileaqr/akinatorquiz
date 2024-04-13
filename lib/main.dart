@@ -13,7 +13,7 @@ import 'firebase_options.dart';
 
 import 'dto/app_data.dart';
 import 'manager/firestore_manager.dart';
-import 'manager/sqlite_util.dart';
+import 'manager/sqlite_manager.dart';
 import 'view/play_view.dart';
 
 void main() async {
@@ -61,7 +61,7 @@ Future<void> sqliteInitialize() async {
 
   // // 開発用にいつでも消せるような処理を入れておく
   // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS cities");
-  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS posts");
+  // await sqliteDb!.execute("DROP TABLE IF EXISTS posts");
 }
 
 class MyApp extends StatelessWidget {

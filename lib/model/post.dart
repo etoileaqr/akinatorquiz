@@ -46,6 +46,7 @@ class Post {
 
   /* Methods */
   Map<String, dynamic> toJson() => {
+        'id': this.id,
         'genre': this.genre,
         'category': this.category,
         'scope': this.scope,

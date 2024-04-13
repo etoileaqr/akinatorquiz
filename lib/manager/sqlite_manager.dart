@@ -27,11 +27,17 @@ class SqliteManager {
   }
 
   static Future<int> insertPost({required Post post}) async {
-    Map<String, dynamic> jsonMap = post.toJson();
-    int id = await sqliteDb!.insert(
-      Constants.POSTS,
-      jsonMap,
-    );
+    int id = 0;
+    try {
+      Map<String, dynamic> jsonMap = post.toJson();
+      id = await sqliteDb!.insert(
+        Constants.POSTS,
+        jsonMap,
+      );
+    } catch (e) {
+      // TODO 本来はupsertしたいが、今は一旦握りつぶすことで対処している・・
+      // print(e);
+    }
     return id;
   }
 
@@ -69,5 +75,22 @@ class SqliteManager {
       where: 'genre = ? AND category = ?',
       whereArgs: [genre, category],
     );
+  }
+
+  static Future<List<Post>> selectPostsGroupBy() async {
+    List<Map<String, Object?>> list = await sqliteDb!.query(
+      Constants.POSTS,
+      // where: 'genre = ? AND category = ?',
+      // whereArgs: [genre, category],
+      orderBy: 'postTime DESC',
+      groupBy: 'genre, category',
+    );
+    // TODO このままだと古い順にGROUP BYしてしまう・・
+    List<Post> posts = [];
+    for (Map<String, dynamic> map in list) {
+      posts.add(Post.fromJson(map));
+    }
+    // print(posts.length);
+    return posts;
   }
 }

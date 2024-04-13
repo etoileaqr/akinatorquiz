@@ -6,19 +6,19 @@ class WidgetUtil {
       const TextStyle(fontSize: 18, fontWeight: FontWeight.w500);
   static double iconRadius = 30;
 
-  static int getTextLinesLength({
-    required String text,
-    required TextStyle style,
-    required double maxWidth,
-    int? maxLines,
-  }) {
-    final tp = TextPainter(
-        text: TextSpan(text: text, style: style),
-        textDirection: TextDirection.ltr,
-        maxLines: maxLines);
-    tp.layout(maxWidth: maxWidth);
-    return tp.computeLineMetrics().length;
-  }
+  // static int getTextLinesLength({
+  //   required String text,
+  //   required TextStyle style,
+  //   required double maxWidth,
+  //   int? maxLines,
+  // }) {
+  //   final tp = TextPainter(
+  //       text: TextSpan(text: text, style: style),
+  //       textDirection: TextDirection.ltr,
+  //       maxLines: maxLines);
+  //   tp.layout(maxWidth: maxWidth);
+  //   return tp.computeLineMetrics().length;
+  // }
 
   // ユーザーのアイコン（カスタマイズとかダルいから固定にしたいな・・）
   static Container yourIcon({required double radius}) {

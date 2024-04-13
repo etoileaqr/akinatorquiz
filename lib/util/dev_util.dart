@@ -1,6 +1,8 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings, unused_local_variable
 
 import 'dart:math';
+
+import 'package:akinatorquiz/constants.dart';
 
 import '../model/post.dart';
 import '../main.dart';
@@ -14,7 +16,14 @@ class DevUtil {
     // chatGptPost.postId = chatGptPostId;
     String str = '';
     yield str;
-    // TODO yourPostの中身をChatGPTに投げる前に置換する
+    // ChatGPTに投げる前に、質問文の最後に、
+    // "「はい」か「いいえ」か「部分的にそう」で答えてください。"
+    // をつける
+    String question = yourPost.answer +
+        'は' +
+        yourPost.content +
+        '\n' +
+        Constants.question_annotation;
 
     for (String word in chatGptResponseWords) {
       final random = Random();
@@ -28,13 +37,6 @@ class DevUtil {
   }
 
   static const List<String> chatGptResponseWords = [
-    "はい、",
-    "オタワ",
-    "は",
-    "カナダ",
-    "の",
-    "首都",
-    "です。",
     "はい、",
     "オタワ",
     "は",
