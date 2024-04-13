@@ -341,20 +341,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
     //     return null;
     //   }
     // }
-    // TODO 使わないかも
-    // ignore: unused_element
-    Text subtitle(dynamic obj) {
-      return Text(
-        obj == null ? '' : obj.posts.last.content,
-        maxLines: 1,
-        style: TextStyle(
-          color: Colors.grey[400],
-        ),
-      );
-    }
 
     Text buttonText(String item) => Text(
-          item,
+          AppData.instance.dictMap[item]!.ja,
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
           style: const TextStyle(fontSize: 14),
@@ -408,6 +397,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
       );
     }
 
+    SizedBox header(text) => SizedBox(
+        width: MediaQuery.of(context).size.width * 0.25, child: Text(text));
+
     return Drawer(
       child: Column(children: [
         DrawerHeader(
@@ -416,15 +408,14 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row(children: [
-              //   // drawerIconButton(icon: Icons.abc, onPressed: () {})
-              // ]),
-              // Text(
-              //   '出題範囲',
-              //   style: TextStyle(fontSize: 14),
-              // ),
-              genreDropdownButton(),
-              categoryDropdownButton(),
+              Row(children: [
+                header('ジャンル'),
+                genreDropdownButton(),
+              ]),
+              Row(children: [
+                header('カテゴリー'),
+                categoryDropdownButton(),
+              ]),
             ],
           ),
         ),

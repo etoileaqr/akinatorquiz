@@ -1,6 +1,6 @@
 import '../main.dart';
 import '../model/item.dart';
-import '../model/typo_corrector.dart';
+import '../model/typo.dart';
 import '../model/dictionary.dart';
 import '../model/post.dart';
 
@@ -17,7 +17,7 @@ class AppData {
   // インスタンス生成時に使用されるプライベートな名前付きコンストラクタ
   AppData._internal();
 
-  List<TypoCorrector> typoCorrectors = [];
+  List<Typo> typos = [];
   Post? yourPost;
   bool alreadyLoaded = false;
 

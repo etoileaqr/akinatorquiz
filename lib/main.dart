@@ -13,8 +13,6 @@ import 'firebase_options.dart';
 
 import 'dto/app_data.dart';
 import 'manager/firestore_manager.dart';
-import 'util/file_util.dart';
-import 'model/typo_corrector.dart';
 import 'manager/sqlite_util.dart';
 import 'view/play_view.dart';
 
@@ -25,7 +23,8 @@ void main() async {
   );
 
   prefs = await SharedPreferences.getInstance();
-  await firestoreInitialize();
+  // TODO あとでSplashScreen→起動画面の時の処理に移行する
+  await fetchMstFromFirestore();
 
   runApp(const MyApp());
 
@@ -45,12 +44,8 @@ final openAI = OpenAI.instance.build(
   baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 20)),
 );
 
-Future<void> firestoreInitialize() async {
-  //TODO 実際はFirebaseで管理する予定
-  Iterable typoJson = await FileUtil.loadJson('assets/dev/typos.json');
-  AppData.instance.typoCorrectors =
-      typoJson.map((data) => TypoCorrector.fromJson(data)).toList();
-
+Future<void> fetchMstFromFirestore() async {
+  AppData.instance.typos = await FirestoreManager.getTypos();
   AppData.instance.dictMap = await FirestoreManager.getDictionary();
   AppData.instance.genreMap = await FirestoreManager.getGenreMap();
   AppData.instance.itemMap =
