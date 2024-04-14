@@ -1,9 +1,10 @@
-// ignore_for_file: prefer_interpolation_to_compose_strings, non_constant_identifier_names, avoid_print
+// ignore_for_file: non_constant_identifier_names, prefer_interpolation_to_compose_strings
 
 import 'dart:math';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +27,8 @@ class StateController with ChangeNotifier {
   }
 }
 
+bool isAppOpenAdShowing = false;
+
 class PlayView extends StatefulWidget {
   const PlayView({super.key});
 
@@ -36,36 +39,38 @@ class PlayView extends StatefulWidget {
 class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
+  AppOpenAdManager appOpenAdManager = AppOpenAdManager();
   Stream<String>? _data;
   Future<List<Post>>? _localData;
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    print("state = $state");
+    // print("state = $state");
     switch (state) {
       case AppLifecycleState.inactive:
-        print('非アクティブになったときの処理');
+        // print('非アクティブになったときの処理');
         break;
       case AppLifecycleState.paused:
-        print('停止されたときの処理');
+        // print('停止されたときの処理');
         break;
       case AppLifecycleState.resumed:
-        print('再開されたときの処理');
+        // print('再開されたときの処理');
+        appOpenAdManager.loadAd();
         break;
       case AppLifecycleState.detached:
-        print('破棄されたときの処理');
+        // print('破棄されたときの処理');
         break;
       default:
-        print('default');
+      // print('default');
     }
-    print(DateTime.now());
+    // print(DateTime.now());
   }
 
   @override
   void dispose() {
-    print("dispose");
     WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
+    appOpenAdManager.dispose();
     super.dispose();
   }
 
@@ -130,6 +135,13 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    if (isAppOpenAdShowing) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      );
+      isAppOpenAdShowing = false;
+    }
     // アイコンのサイズ
     double r = 30;
     double textWidth = MediaQuery.of(context).size.width * 0.8;
@@ -198,7 +210,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                     width: 320,
                     height: 50,
                     margin: const EdgeInsets.only(bottom: 10),
-                    child: AdWidget(ad: AdmobManager().bannerAd),
+                    child: AdWidget(ad: BannerAdManager().bannerAd),
                   ),
                   Expanded(
                     child: Scrollbar(
