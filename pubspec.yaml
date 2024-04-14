@@ -52,6 +52,9 @@ dependencies:
   cloud_firestore: ^4.15.8
   shared_preferences: ^2.2.2
   google_mobile_ads: ^5.0.0
+  animated_splash_screen: ^1.3.0
+  # 6.0.0以上に上げるとEnum型じゃなくなって厄介なので、5.0.2で止めておく。
+  connectivity_plus: ^5.0.2
 
 dev_dependencies:
   flutter_test:

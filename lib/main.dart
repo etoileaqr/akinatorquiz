@@ -1,6 +1,5 @@
-// ignore_for_file: non_constant_identifier_names
-
-import 'package:flutter/cupertino.dart';
+import 'package:akinatorquiz/view/start_up.dart';
+import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'package:sqflite/sqflite.dart';
@@ -11,10 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 
-import 'dto/app_data.dart';
-import 'manager/firestore_manager.dart';
 import 'manager/sqlite_manager.dart';
-import 'view/play_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,8 +19,6 @@ void main() async {
   );
 
   prefs = await SharedPreferences.getInstance();
-  // TODO あとでSplashScreen→起動画面の時の処理に移行する
-  await fetchMstFromFirestore();
 
   runApp(const MyApp());
 
@@ -43,16 +37,6 @@ final openAI = OpenAI.instance.build(
   token: token,
   baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 20)),
 );
-
-Future<void> fetchMstFromFirestore() async {
-  // TODO 毎回DBからとってこなければならないのはマズいので、SQLiteに格納する
-  // TODO はじめに、ネットワーク接続状況をチェックし、接続がなければ例外をスローする(NoConnectionException)
-  AppData.instance.typos = await FirestoreManager.getTypos();
-  AppData.instance.dictMap = await FirestoreManager.getDictionary();
-  AppData.instance.genreMap = await FirestoreManager.getGenreMap();
-  AppData.instance.itemMap =
-      await FirestoreManager.getItemMap(genreMap: AppData.instance.genreMap);
-}
 
 Future<void> sqliteInitialize() async {
   // テーブル作成
@@ -86,23 +70,22 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //TODO AnimatedSplashScreenで実装する
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('テスト'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              CupertinoPageRoute(
-                builder: (context) => const PlayView(),
-              ),
-            );
-          },
-          child: const Text('ホーム画面へ遷移'),
+    return AnimatedSplashScreen(
+      backgroundColor: Colors.black,
+      // splashIconSize: MediaQuery.of(context).size.width * 0.5,
+      splash: SizedBox(
+        // color: Colors.blue,
+        width: MediaQuery.of(context).size.width * 0.5,
+        height: double.infinity,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: Image.asset(
+              'assets/file/powered-by-openai-badge-outlined-on-dark.png'),
         ),
       ),
+      duration: 5000,
+      animationDuration: const Duration(milliseconds: 2500),
+      nextScreen: const StartUp(),
     );
   }
 }

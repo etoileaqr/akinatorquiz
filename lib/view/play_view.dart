@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import '../constants.dart';
 import '../dto/app_data.dart';
+import '../main.dart';
 import '../manager/admob_manager.dart';
 import '../model/post.dart';
 import '../model/item.dart';
@@ -96,7 +97,15 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
         }
       }
     }
-    Item answerItem = targetList[Random().nextInt(targetList.length)];
+    bool isFirst = prefs.getBool('isFirst') ?? true;
+    Item answerItem;
+    if (isFirst) {
+      answerItem = Item(scope: 'アジア', name: '東京');
+      prefs.setBool('isFirst', false);
+    } else {
+      answerItem = targetList[Random().nextInt(targetList.length)];
+    }
+
     AppData.instance.answer = answerItem.name;
     String s = '';
     if (AppData.instance.category == 'world_cities') {
@@ -104,6 +113,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
     } else {
       s = '選択したので当ててください。' '\nAIの都合上、答えるときは必ず' '\n「答えは〜」で始めてください🙏';
     }
+    print(answerItem.name);
     Post firstPost = Post.chatGpt(content: s);
     AppData.instance.posts.add(firstPost);
   }
