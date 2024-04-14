@@ -103,12 +103,10 @@ class AppOpenAdManager implements AppOpenAdLoadCallback {
   }
 
   @override
-  // TODO: implement onAdFailedToLoad
   FullScreenAdLoadErrorCallback get onAdFailedToLoad =>
       throw UnimplementedError();
 
   @override
-  // TODO: implement onAdLoaded
   GenericAdEventCallback<AppOpenAd> get onAdLoaded =>
       throw UnimplementedError();
 }

@@ -3,6 +3,7 @@
 import 'dart:math';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -113,7 +114,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
     } else {
       s = '選択したので当ててください。' '\nAIの都合上、答えるときは必ず' '\n「答えは〜」で始めてください🙏';
     }
-    print(answerItem.name);
+    if (kDebugMode) {
+      print(answerItem.name);
+    }
     Post firstPost = Post.chatGpt(content: s);
     AppData.instance.posts.add(firstPost);
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
@@ -52,7 +53,9 @@ Stream<double> fetchMstFromFirestore() async* {
     // prefsのバージョン情報の変数がnullならマスタがないことになってゲームをプレイできないので、
     // 例外をスローするかどうするか...
   } on NoConnectionException catch (e) {
-    print(e);
+    if (kDebugMode) {
+      print(e);
+    }
     if (prefs.getInt('itemMstVer') == null) {
       // この場合どうするかだな・・
     } else {
@@ -60,7 +63,9 @@ Stream<double> fetchMstFromFirestore() async* {
     }
   } catch (e) {
     // マスタ取得が途中で終わったなど・・
-    print(e);
+    if (kDebugMode) {
+      print(e);
+    }
   }
 
   yield 1.0;
