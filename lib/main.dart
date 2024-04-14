@@ -45,6 +45,8 @@ final openAI = OpenAI.instance.build(
 );
 
 Future<void> fetchMstFromFirestore() async {
+  // TODO 毎回DBからとってこなければならないのはマズいので、SQLiteに格納する
+  // TODO はじめに、ネットワーク接続状況をチェックし、接続がなければ例外をスローする(NoConnectionException)
   AppData.instance.typos = await FirestoreManager.getTypos();
   AppData.instance.dictMap = await FirestoreManager.getDictionary();
   AppData.instance.genreMap = await FirestoreManager.getGenreMap();

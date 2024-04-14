@@ -1,14 +1,16 @@
-// ignore_for_file: prefer_interpolation_to_compose_strings, non_constant_identifier_names
+// ignore_for_file: prefer_interpolation_to_compose_strings, non_constant_identifier_names, avoid_print
 
 import 'dart:math';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 
 import '../constants.dart';
 import '../dto/app_data.dart';
+import '../manager/admob_manager.dart';
 import '../model/post.dart';
 import '../model/item.dart';
 import '../util/common_util.dart';
@@ -101,7 +103,6 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
     AppData.instance.posts.add(firstPost);
   }
 
-  // TODO 途中
   Future<void> _localSave() async {
     // まずdtoで持っているPostsをSqliteに登録する
     for (Post post in AppData.instance.posts) {
@@ -182,16 +183,23 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
           canPop: false,
           child: Scaffold(
             key: _key,
-            appBar: AppBar(
-              title: const Text('ホーム'),
-              automaticallyImplyLeading: false,
-            ),
+            // appBar: AppBar(
+            //   title: const Text('ホーム'),
+            //   automaticallyImplyLeading: false,
+            // ),
             body: SafeArea(
               child: Consumer<StateController>(builder: (context, ctrl, child) {
                 // 最終行までスクロールする
                 _goToLast();
 
                 return Column(children: [
+                  // 広告Widget
+                  Container(
+                    width: 320,
+                    height: 50,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: AdWidget(ad: AdmobManager().bannerAd),
+                  ),
                   Expanded(
                     child: Scrollbar(
                       // Scrollbar側にもcontrollerを設定する必要あり
@@ -305,7 +313,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
             // floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
             floatingActionButton: Container(
               margin: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.15),
+                  top: MediaQuery.of(context).padding.top +
+                      MediaQuery.of(context).size.height * 0.15 +
+                      20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -358,13 +368,6 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
   }
 
   Drawer _Drawer() {
-    // Icon? checkmark(Mode mode) {
-    //   if (mode == AppData.instance.mode) {
-    //     return const Icon(Icons.check, color: CupertinoColors.systemPurple);
-    //   } else {
-    //     return null;
-    //   }
-    // }
     double dropdownButtonWidth = MediaQuery.of(context).size.width * 0.4;
 
     Widget buttonText(String item, bool isSelected) {
@@ -600,7 +603,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
         ),
         const Divider(),
         Container(
-          margin: const EdgeInsets.fromLTRB(20.0, 0, 16.0, 24.0),
+          margin: const EdgeInsets.fromLTRB(20.0, 4.0, 16.0, 30.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
