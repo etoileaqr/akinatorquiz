@@ -12,7 +12,7 @@ class Item {
     required this.name,
   });
 
-  /// PostをJsonからデコードするConstructor
+  /// ItemをJsonからデコードするConstructor
   Item.fromJson(Map<String, dynamic> json)
       : this.scope = json['scope'] as String? ?? '',
         this.name = json['name'] as String? ?? '';

@@ -1,7 +1,9 @@
-import 'package:akinatorquiz/view/start_up.dart';
-import 'package:animated_splash_screen/animated_splash_screen.dart';
-import 'package:flutter/material.dart';
+import 'dart:io';
+import 'env/env.dart';
 
+import 'package:animated_splash_screen/animated_splash_screen.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,8 +11,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
-
 import 'manager/sqlite_manager.dart';
+import 'view/start_up.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,10 +21,22 @@ void main() async {
   );
 
   prefs = await SharedPreferences.getInstance();
-
+  isEmulator = await distinguishIfIsEmulator();
   runApp(const MyApp());
 
-  await sqliteInitialize();
+  sqliteDb = await SqliteManager.createTables();
+
+  // List<List<String>> li = await FileUtil.loadCsv('assets/dev/cities.csv');
+  // List<Content> cList = [];
+  // for (var v in li) {
+  //   Content c = Content(doc: v[0], scope: v[1], name: v[2]);
+  //   cList.add(c);
+  // }
+  // await DevUtil().insertMstToDb(
+  //   docName: 'subjects',
+  //   collectionName: 'world_cities',
+  //   list: cList,
+  // );
 }
 
 /* SharedPreferencesのinstance */
@@ -32,22 +46,38 @@ final firestore = FirebaseFirestore.instance;
 /* SQLiteのインスタンス */
 Database? sqliteDb;
 /* gitに公開するので実際のトークンは伏せておきます。 */
-const token = 'Actual TOKEN is supposed to be written here';
+// const token = 'Actual TOKEN is supposed to be written here';
 final openAI = OpenAI.instance.build(
-  token: token,
+  token: Env.chatGptToken,
   baseOption: HttpSetup(receiveTimeout: const Duration(seconds: 20)),
 );
+// 開発用: エミュレータかどうか
+bool isEmulator = false;
 
-Future<void> sqliteInitialize() async {
-  // テーブル作成
-  sqliteDb = await SqliteManager.createTables(sqls: {
-    // 'assets/sql/CREATE_CITIES.sql',
-    'assets/sql/CREATE_POSTS.sql',
-  });
+// Future<void> sqliteInitialize() async {
+//   // テーブル作成
+//   sqliteDb = await SqliteManager.createTables(sqls: {
+//     // 'assets/sql/CREATE_CITIES.sql',
+//     'assets/sql/CREATE_POSTS.sql',
+//   });
 
-  // // 開発用にいつでも消せるような処理を入れておく
-  // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS cities");
-  // await sqliteDb!.execute("DROP TABLE IF EXISTS posts");
+//   // // 開発用にいつでも消せるような処理を入れておく
+//   // await AppData.instance.sDb!.execute("DROP TABLE IF EXISTS cities");
+//   // await sqliteDb!.execute("DROP TABLE IF EXISTS posts");
+// }
+
+Future<bool> distinguishIfIsEmulator() async {
+  if (Platform.isIOS) {
+    final deviceInfo = DeviceInfoPlugin();
+    IosDeviceInfo info = await deviceInfo.iosInfo;
+    return !info.isPhysicalDevice;
+  } else if (Platform.isAndroid) {
+    final deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo info = await deviceInfo.androidInfo;
+    return !info.isPhysicalDevice;
+  } else {
+    return true;
+  }
 }
 
 class MyApp extends StatelessWidget {

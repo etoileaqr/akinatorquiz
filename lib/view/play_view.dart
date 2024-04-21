@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names, prefer_interpolation_to_compose_strings
 
 import 'dart:math';
+import 'package:akinatorquiz/manager/firestore_manager.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -9,17 +10,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../constants.dart';
 import '../dto/app_data.dart';
 import '../main.dart';
 import '../manager/admob_manager.dart';
+import '../manager/chat_gpt_manager.dart';
 import '../model/post.dart';
 import '../model/item.dart';
 import '../util/common_util.dart';
-import '../util/dev_util.dart';
 import '../manager/sqlite_manager.dart';
 import '../util/widget_util.dart';
+import 'custom_text_field_dialog.dart';
 
 // TextFormField側から更新をかけるために、
 // ChangeNotifierを使うことにした。
@@ -42,8 +45,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
   AppOpenAdManager appOpenAdManager = AppOpenAdManager();
-  Stream<String>? _data;
   Future<List<Post>>? _localData;
+  Future<String?>? _future;
+  TextEditingController nameController = TextEditingController();
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -72,6 +76,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
+    nameController.dispose();
     appOpenAdManager.dispose();
     super.dispose();
   }
@@ -80,8 +85,23 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initialize();
+    Future(() async {
+      AppData.instance.posts = [];
+      List<Post> posts = await SqliteManager.selectPosts(
+          genre: AppData.instance.genre, category: AppData.instance.category);
+      if (posts.isNotEmpty) {
+        if (posts.last.content.contains('選択したので当ててください')) {
+          posts.removeLast();
+        }
+      }
+      AppData.instance.posts = posts;
+      await _localSave();
+      setState(() {});
+    });
+
     _localData = SqliteManager.selectPostsGroupBy();
+    _initialize();
+    // _getFuture();
   }
 
   void _initialize() {
@@ -133,9 +153,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
   }
 
   // Streamの取得メソッド
-  void _getStream() {
-    _data = DevUtil.getFakeChatGptResponse(yourPost: AppData.instance.yourPost!)
-        .asBroadcastStream();
+  void _getFuture() async {
+    // TODO isEmulator的なので条件分岐して、スタブ化したものを入れる
+    _future = ChatGptManager.receiveChatGptResponse();
   }
 
   // キーボードを出している都合上、
@@ -232,8 +252,8 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                       child: SingleChildScrollView(
                         // controllerを設定
                         controller: _scrollController,
-                        child: StreamBuilder(
-                          stream: _data,
+                        child: FutureBuilder(
+                          future: _future,
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
@@ -241,9 +261,10 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                                 // 取得が終わってから格納する
                                 // 何度も追加してしまわないように、フラグを見る
                                 if (!AppData.instance.alreadyLoaded) {
-                                  String str = snapshot.data!;
                                   // 取得したデータをもとにインスタンスを作成し、dtoに格納
-                                  Post post = Post.chatGpt(content: str);
+                                  String chatGptAnswer = snapshot.data!;
+                                  Post post =
+                                      Post.chatGpt(content: chatGptAnswer);
                                   AppData.instance.posts.add(post);
 
                                   // 追加が完了したのでフラグを立てる
@@ -254,12 +275,8 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                               } else {
                                 return postTileParentWidget();
                               }
-                            } else if (snapshot.connectionState ==
-                                ConnectionState.active) {
-                              // 取得中のデータ
-                              String chatGptAnswer = snapshot.data!;
-
-                              // 複数行に渡る可能性があるので、都度最終行までスクロールする。
+                            } else if (snapshot.connectionState !=
+                                ConnectionState.none) {
                               _goToLast();
                               return Column(children: [
                                 for (Post p in AppData.instance.posts)
@@ -294,7 +311,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                                                         radius: 8.5),
                                               ),
                                             ]),
-                                            Text(chatGptAnswer,
+                                            Text('',
                                                 overflow: TextOverflow.visible,
                                                 style: cStyle),
                                           ],
@@ -302,7 +319,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                                       ),
                                     ],
                                   ),
-                                ),
+                                )
                               ]);
                             } else {
                               return postTileParentWidget();
@@ -314,7 +331,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                   ),
                   Container(
                     padding: const EdgeInsets.only(top: 10, bottom: 10),
-                    child: TextInputWidget(getStream: _getStream),
+                    child: TextInputWidget(getFuture: _getFuture),
                   ),
                 ]);
               }),
@@ -371,18 +388,34 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                   //   height: 3,
                   // ),
                   FloatingActionButton.small(
-                    heroTag: 'hero3',
-                    shape: const CircleBorder(),
-                    foregroundColor: Colors.black,
-                    backgroundColor: Colors.blue[200],
-                    onPressed: () async {
-                      await _localSave();
-                      _initialize();
-                      // 画面の再描画
-                      setState(() {});
-                    },
-                    child: const Icon(Icons.autorenew),
-                  ),
+                      heroTag: 'hero3',
+                      shape: const CircleBorder(),
+                      foregroundColor: (AppData.instance.posts.last.content
+                              .contains('選択したので当ててください'))
+                          ? Colors.grey[350]
+                          : Colors.black,
+                      backgroundColor: (AppData.instance.posts.last.content
+                              .contains('選択したので当ててください'))
+                          ? Colors.grey[400]!.withOpacity(0.7)
+                          : Colors.blue[200],
+                      onPressed: (AppData.instance.posts.last.content
+                              .contains('選択したので当ててください'))
+                          ? null
+                          : () async {
+                              await _localSave();
+                              _initialize();
+                              // 画面の再描画
+                              setState(() {});
+                            },
+                      child: Stack(children: [
+                        const Icon(Icons.autorenew),
+                        if (AppData.instance.posts.last.content
+                            .contains('選択したので当ててください'))
+                          Icon(
+                            Icons.clear,
+                            color: Colors.grey[350],
+                          )
+                      ])),
                 ],
               ),
             ),
@@ -634,10 +667,120 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
             children: [
               footerButton(icon: Icons.help, label: '使い方', onPressed: () {}),
               footerButton(
-                  icon: CupertinoIcons.info, label: 'インフォ', onPressed: () {}),
+                  icon: CupertinoIcons.info,
+                  label: 'インフォ',
+                  onPressed: () {
+                    showCupertinoDialog(
+                      context: context,
+                      builder: (_) => CupertinoAlertDialog(
+                        content: const Text('新しい機能が追加されたらこちらに表示します！！'),
+                        actions: [
+                          CupertinoDialogAction(
+                            isDefaultAction: true,
+                            onPressed: () => Navigator.of(_).pop(),
+                            child: const Text(
+                              'OK',
+                              style: TextStyle(
+                                color: CupertinoColors.activeBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
               footerButton(
-                  icon: CupertinoIcons.flag, label: 'バグの報告', onPressed: () {}),
-              footerButton(icon: Icons.share, label: 'シェア', onPressed: () {}),
+                  icon: CupertinoIcons.flag,
+                  label: 'バグの報告',
+                  onPressed: () async {
+                    bool sent = await showCupertinoDialog(
+                        context: context,
+                        builder: (_) {
+                          return CustomTextFieldDialog(
+                            title: 'アプリの改善にご協力ください🙏',
+                            contentWidget: Card(
+                              color: Colors.transparent,
+                              elevation: 0.0,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextFormField(
+                                    controller: nameController,
+                                    maxLength: 30,
+                                    maxLines: 1,
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                    keyboardType: TextInputType.text,
+                                    // textInputAction: TextInputAction.next,
+                                    // decoration: const InputDecoration(
+                                    //   labelText: 'バグの概要',
+                                    //   errorMaxLines: 2,
+                                    // ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        // return 'Name must not be null or empty.';
+                                        return '入力してください。';
+                                      }
+
+                                      // if (value.length > 10) {
+                                      //   return '';
+                                      // }
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            cancelActionText: 'キャンセル',
+                            cancelAction: () {},
+                            defaultActionText: '送信',
+                            action: () async {
+                              String content = nameController.text;
+                              try {
+                                await FirestoreManager.insertBugToDb(
+                                    content: content);
+                              } catch (e) {
+                                print(e);
+                              }
+                            },
+                          );
+                        });
+                    if (sent) {
+                      await Future.delayed(const Duration(milliseconds: 200));
+                      nameController.clear();
+                      if (!mounted) {
+                        return;
+                      }
+
+                      showCupertinoDialog(
+                        context: context,
+                        builder: (_) => CupertinoAlertDialog(
+                          content: const Text('ありがとうございます！！'),
+                          actions: [
+                            CupertinoDialogAction(
+                              isDefaultAction: true,
+                              onPressed: () => Navigator.of(_).pop(),
+                              child: const Text(
+                                'OK',
+                                style: TextStyle(
+                                  color: CupertinoColors.activeBlue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  }),
+              footerButton(
+                  icon: Icons.share,
+                  label: 'シェア',
+                  onPressed: () async {
+                    // TODO リリースしたらホームページのリンク入れる
+                    String shareText = 'アプリ『アキネータークイズ』';
+                    // シェアする文章を引数で渡す
+                    await Share.share(shareText);
+                  }),
             ],
           ),
         ),
@@ -649,9 +792,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
 /// TextFormField側のウィジェット
 // 画面全体を再描画しないように分ける
 class TextInputWidget extends HookWidget {
-  const TextInputWidget({super.key, required this.getStream});
+  const TextInputWidget({super.key, required this.getFuture});
   // こちらからStreamメソッドを呼び出せるよう、関数をパラメータで渡す
-  final Function getStream;
+  final Function getFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -663,7 +806,7 @@ class TextInputWidget extends HookWidget {
       children: [
         SizedBox(
           width: MediaQuery.of(context).size.width * 0.8,
-          child: TextFormField(
+          child: TextField(
             keyboardType: TextInputType.multiline,
             onChanged: (value) {
               // 空文字以外なら送信可能とする
@@ -731,7 +874,7 @@ class TextInputWidget extends HookWidget {
                     AppData.instance.alreadyLoaded = false;
 
                     // Streamメソッドを呼び出す
-                    getStream();
+                    getFuture();
                     // setStateNotifierを呼び出す
                     context.read<StateController>().setStateNotify();
                   },

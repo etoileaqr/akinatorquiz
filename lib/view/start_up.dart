@@ -1,11 +1,15 @@
+import 'package:akinatorquiz/model/typo.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import '../constants.dart';
 import '../dto/app_data.dart';
 import '../main.dart';
 import '../manager/firestore_manager.dart';
+import '../manager/sqlite_manager.dart';
+import '../model/version.dart';
 import '../my_exception.dart';
 import '../util/connection_util.dart';
 import 'play_view.dart';
@@ -13,7 +17,6 @@ import 'play_view.dart';
 Stream<double> fetchMstFromFirestore() async* {
   // TODO 毎回DBからとってこなければならないのはマズいので、SQLiteに格納する
   // TODO はじめに、ネットワーク接続状況をチェックし、接続がなければ例外をスローする(NoConnectionException)
-  await Future.delayed(const Duration(seconds: 1));
   try {
     final canConnect = await ConnectionUtil.checkConnectivityStatus();
     if (!canConnect) {
@@ -21,34 +24,88 @@ Stream<double> fetchMstFromFirestore() async* {
     }
     yield 0.1;
 
-    // TODO バージョンマスタを見て更新が必要かチェック
-    await Future.delayed(const Duration(seconds: 1));
-    // 誤字変換マスタを取得
-    AppData.instance.typos = await FirestoreManager.getTypos();
-    // SQLiteに格納
-    yield 0.2;
+    List<dynamic> allLocalVersions = await sqliteDb!.query(Constants.VERSIONS);
+    if (allLocalVersions.isEmpty) {
+      await SqliteManager.initMstVersions();
+    }
 
-    // バージョンマスタを見て更新が必要かチェック
-    await Future.delayed(const Duration(seconds: 1));
-    // 辞書マスタを取得
-    AppData.instance.dictMap = await FirestoreManager.getDictionary();
-    // SQLiteに格納
-    yield 0.3;
+    // Firestoreからバージョン情報を取得する
+    Map<String, Version> versionMap = await FirestoreManager.fetchVersions();
 
-    // バージョンマスタを見て更新が必要かチェック
-    await Future.delayed(const Duration(seconds: 1));
-    // ジャンルマスタを取得
-    AppData.instance.genreMap = await FirestoreManager.getGenreMap();
-    // SQLiteに格納
+    // ①誤字変換マスタ
+    try {
+      // 1.SQLiteからバージョンを取得
+      List<dynamic> sqTyposTmp =
+          await SqliteManager.getLocalMstVersion(mstName: Constants.TYPOS);
+      Version sqTypoVersion = Version.fromJson(sqTyposTmp.first);
+      // 2.Firestoreからバージョンを取得
+      Version fsTypoVersion = versionMap[Constants.TYPOS]!;
+      List<Typo> typos = [];
+      // 3.Firestoreのバージョンの方が大きい場合は、Firestoreから取得する
+      if (fsTypoVersion.version > sqTypoVersion.version) {
+        typos = await FirestoreManager.fetchTypos();
+        await SqliteManager.deleteAndInsertTypoMst(typos: typos);
+        await SqliteManager.updateMstVersion(
+          map: fsTypoVersion.toJson(),
+          mstName: Constants.TYPOS,
+        );
+      } else {
+        List<dynamic> l = await sqliteDb!.query(Constants.TYPOS);
+        typos = l.map((data) => Typo.fromJson(data)).toList();
+      }
+      // 4.DTOで保持
+      AppData.instance.typos = typos;
+    } catch (e) {
+      print(e);
+    } finally {
+      yield 0.2;
+    }
+
+    // ②辞書マスタ
+    // try {
+    //   // 1.SQLiteからバージョンを取得
+    //   List<dynamic> sqDictTmp =
+    //       await SqliteManager.getLocalMstVersion(mstName: Constants.DICTIONARY);
+    //   Version sqDictVersion = Version.fromJson(sqDictTmp.first);
+    //   // 2.Firestoreからバージョンを取得
+    //   Version fsDictVersion = versionMap[Constants.DICTIONARY]!;
+    //   Map<String, Dictionary> dictMap = {};
+    //   // 3.Firestoreのバージョンの方が大きい場合は、Firestoreから取得する
+    //   if (fsDictVersion.version > sqDictVersion.version) {
+    //     dictMap = await FirestoreManager.fetchDictionary();
+    //     await SqliteManager.deleteAndInsertTypoMst(typos: dicts);
+    //     await SqliteManager.updateMstVersion(
+    //       map: fsDictVersion.toJson(),
+    //       mstName: Constants.DICTIONARY,
+    //     );
+    //   } else {
+    //     List<dynamic> l = await sqliteDb!.query(Constants.DICTIONARY);
+    //     dicts = l.map((data) => Dictionary.fromJson(data));
+    //   }
+    //   // 4.DTOで保持
+    //   AppData.instance.typos = typos;
+    // } catch (e) {
+    // } finally {
+    //   yield 0.3;
+    // }
+    AppData.instance.dictMap = await FirestoreManager.fetchDictionary();
     yield 0.4;
-
-    // バージョンマスタを見て更新が必要かチェック
-    await Future.delayed(const Duration(seconds: 1));
-    // アイテムマスタを取得
-    AppData.instance.itemMap =
-        await FirestoreManager.getItemMap(genreMap: AppData.instance.genreMap);
     // SQLiteに格納
-    yield 0.5;
+
+    // TODO バージョンマスタを見て更新が必要かチェック
+    // await Future.delayed(const Duration(seconds: 1));
+    // ジャンルマスタを取得
+    AppData.instance.genreMap = await FirestoreManager.fetchGenreMap();
+    // SQLiteに格納
+    yield 0.6;
+
+    // TODO バージョンマスタを見て更新が必要かチェック
+    // await Future.delayed(const Duration(seconds: 1));
+    // アイテムマスタを取得
+    AppData.instance.itemMap = await FirestoreManager.fetchItemMap(
+        genreMap: AppData.instance.genreMap);
+    // SQLiteに格納
+    yield 0.8;
 
     // prefsのバージョン情報の変数がnullならマスタがないことになってゲームをプレイできないので、
     // 例外をスローするかどうするか...

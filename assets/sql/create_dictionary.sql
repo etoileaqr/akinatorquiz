@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS dictionary(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    docId TEXT,
+    ja TEXT
+)

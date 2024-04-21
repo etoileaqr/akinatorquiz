@@ -17,4 +17,10 @@ class Dictionary {
     required this.key,
     required Map<String, dynamic> map,
   }) : this.ja = map['ja'] as String? ?? '';
+
+  // toJson
+  Map<String, dynamic> toJson() => {
+        'key': this.key,
+        'ja': this.ja,
+      };
 }

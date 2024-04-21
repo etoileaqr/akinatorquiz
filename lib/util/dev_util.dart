@@ -1,40 +1,59 @@
-// ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings, unused_local_variable
+// ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings, unused_local_variable, unused_import
 
 import 'dart:math';
 
 import 'package:akinatorquiz/constants.dart';
+import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 
 import '../model/post.dart';
 import '../main.dart';
 
 class DevUtil {
-  static Stream<String> getFakeChatGptResponse(
-      {required Post yourPost}) async* {
-    // Post chatGptPost = Post(
-    //     cityId: yourPost.cityId, cityName: yourPost.cityName, isChatGpt: true);
-    // int chatGptPostId = await SqliteUtil.insertPost(post: chatGptPost);
-    // chatGptPost.postId = chatGptPostId;
-    String str = '';
-    yield str;
-    // ChatGPTに投げる前に、質問文の最後に、
-    // "「はい」か「いいえ」か「部分的にそう」で答えてください。"
-    // をつける
-    String question = yourPost.answer +
-        'は' +
-        yourPost.content +
-        '\n' +
-        Constants.question_annotation;
+  // static Stream<String> getFakeChatGptResponse(
+  //     {required Post yourPost}) async* {
+  //   // Post chatGptPost = Post(
+  //   //     cityId: yourPost.cityId, cityName: yourPost.cityName, isChatGpt: true);
+  //   // int chatGptPostId = await SqliteUtil.insertPost(post: chatGptPost);
+  //   // chatGptPost.postId = chatGptPostId;
+  //   String str = '';
+  //   yield str;
+  //   // ChatGPTに投げる前に、質問文の最後に、
+  //   // "「はい」か「いいえ」か「部分的にそう」で答えてください。"
+  //   // をつける
+  //   String question = yourPost.answer +
+  //       'は' +
+  //       yourPost.content +
+  //       '\n' +
+  //       Constants.question_annotation;
 
-    for (String word in chatGptResponseWords) {
-      final random = Random();
-      int s = random.nextInt(500);
-      await Future.delayed(Duration(milliseconds: s));
-      str += word;
-      // chatGptPost.content = str;
-      // await SqliteUtil.updatePost(post: chatGptPost);
-      yield str;
-    }
-  }
+  //   Stream<ChatResponseSSE> stream = openAI.onChatCompletionSSE(
+  //     request: ChatCompleteText(
+  //       model: GptTurboChatModel(),
+  //       messages: [
+  //         Messages(
+  //           role: Role.system,
+  //           content: question,
+  //         )
+  //       ],
+  //       maxToken: 100,
+  //     ),
+  //   );
+  //   stream.listen((event) {
+  //     final text = event.choices?.last.message?.content ?? '';
+  //     str += text;
+  //     yield str;
+  //   });
+
+  //   // for (String word in chatGptResponseWords) {
+  //   //   final random = Random();
+  //   //   int s = random.nextInt(500);
+  //   //   await Future.delayed(Duration(milliseconds: s));
+  //   //   str += word;
+  //   //   // chatGptPost.content = str;
+  //   //   // await SqliteUtil.updatePost(post: chatGptPost);
+  //   //   yield str;
+  //   // }
+  // }
 
   static const List<String> chatGptResponseWords = [
     "はい、",
@@ -62,11 +81,11 @@ class DevUtil {
 
     for (var r in list) {
       firestore
-          .collection('genre')
+          .collection('mst')
           .doc(docName) // 'subjects'など
           .collection(collectionName) // 'world_cities'など
           .doc(r.doc)
-          .set({'category': r.category, 'name': r.name});
+          .set({'scope': r.scope, 'name': r.name});
     }
     print(list);
   }
@@ -75,10 +94,10 @@ class DevUtil {
 class Content {
   Content({
     required this.doc,
-    required this.category,
+    required this.scope,
     required this.name,
   });
   final String doc;
-  final String category;
+  final String scope;
   final String name;
 }

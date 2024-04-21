@@ -1,16 +1,25 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../constants.dart';
+// import '../model/dictionary.dart';
 import '../model/post.dart';
 import '../main.dart';
+import '../model/typo.dart';
+import '../model/version.dart';
 
 class SqliteManager {
-  static Future<Database?> createTables({required Set<String> sqls}) async {
+  static Future<Database?> createTables() async {
+    Set<String> tables = Set.from(Constants.mstSet);
+    tables.add(Constants.POSTS);
+    tables.add(Constants.VERSIONS);
     Set<String> querys = {};
-    for (String sql in sqls) {
-      String s = await rootBundle.loadString(sql);
-      querys.add(s);
+    for (String tableName in tables) {
+      String sql = 'assets/sql/create_$tableName.sql';
+      String query = await rootBundle.loadString(sql);
+      querys.add(query);
     }
     String dbPath = await getDatabasesPath();
     String path = '$dbPath/akinatorquiz.db';
@@ -24,6 +33,39 @@ class SqliteManager {
       },
     );
     return db;
+  }
+
+  static Future<void> initMstVersions() async {
+    String jsonData =
+        await rootBundle.loadString('assets/file/initial_mst_versions.json');
+    List list = json.decode(jsonData);
+    List<Version> versions =
+        list.map((data) => Version.fromJson(data)).toList();
+    for (var version in versions) {
+      await sqliteDb!.insert(Constants.VERSIONS, version.toJson());
+    }
+  }
+
+  static Future<List<dynamic>> getLocalMstVersion(
+      {required String mstName}) async {
+    List<dynamic> list = await sqliteDb!.query(
+      Constants.VERSIONS,
+      where: 'name=?',
+      whereArgs: [mstName],
+    );
+    return list;
+  }
+
+  static Future<void> updateMstVersion({
+    required Map<String, Object?> map,
+    required String mstName,
+  }) async {
+    await sqliteDb!.update(
+      Constants.VERSIONS,
+      map,
+      where: 'name=?',
+      whereArgs: [mstName],
+    );
   }
 
   static Future<int> insertPost({required Post post}) async {
@@ -93,4 +135,27 @@ class SqliteManager {
     // print(posts.length);
     return posts;
   }
+
+  static Future<void> deleteAndInsertTypoMst(
+      {required List<Typo> typos}) async {
+    List<dynamic> list = await sqliteDb!.query(Constants.TYPOS);
+    if (list.isNotEmpty) {
+      await sqliteDb!.delete(Constants.TYPOS);
+    }
+    for (Typo typo in typos) {
+      await sqliteDb!.insert(Constants.TYPOS, typo.toJson());
+    }
+  }
+
+  // static Future<void> deleteAndInsertDictionaryMst(
+  //     {required Map<String, Dictionary> dictMap}) async {
+  //   List<dynamic> list = await sqliteDb!.query(Constants.DICTIONARY);
+  //   if (list.isNotEmpty) {
+  //     await sqliteDb!.delete(Constants.DICTIONARY);
+  //   }
+  //   for (MapEntry<String, Dictionary> dict in dictMap.entries) {
+
+  //     await sqliteDb!.insert(Constants.TYPOS, typo.toJson());
+  //   }
+  // }
 }

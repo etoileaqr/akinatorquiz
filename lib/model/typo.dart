@@ -11,7 +11,7 @@ class Typo {
   Typo({required this.correct, required this.wrong});
 
   /// TypoをJsonからデコードするConstructor
-  Typo.fromFirestore(Map<String, dynamic> json)
+  Typo.fromJson(Map<String, dynamic> json)
       : this.correct = json['correct'] as String? ?? '',
         this.wrong = json['wrong'] as String? ?? '';
 
@@ -24,4 +24,10 @@ class Typo {
     }
     return str;
   }
+
+  // toJson
+  Map<String, dynamic> toJson() => {
+        'correct': this.correct,
+        'wrong': this.wrong,
+      };
 }

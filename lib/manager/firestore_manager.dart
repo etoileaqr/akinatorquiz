@@ -6,22 +6,35 @@ import '../model/dictionary.dart';
 import '../main.dart';
 import '../model/item.dart';
 import '../model/typo.dart';
+import '../model/version.dart';
 
 class FirestoreManager {
+  // versionマスタの取得
+  static Future<Map<String, Version>> fetchVersions() async {
+    Map<String, Version> m = {};
+    var collections = await firestore.collection('versions').get();
+    for (var snapshot in collections.docs) {
+      Map<String, dynamic> map = snapshot.data();
+      Version version = Version.fromJson(map);
+      m[version.getKey()] = version;
+    }
+    return m;
+  }
+
   // typoマスタの取得
-  static Future<List<Typo>> getTypos() async {
+  static Future<List<Typo>> fetchTypos() async {
     List<Typo> list = [];
     var collections = await firestore.collection('typos').get();
     for (var snapshot in collections.docs) {
       Map<String, dynamic> map = snapshot.data();
-      Typo typo = Typo.fromFirestore(map);
+      Typo typo = Typo.fromJson(map);
       list.add(typo);
     }
     return list;
   }
 
   // dictionaryマスタの取得
-  static Future<Map<String, Dictionary>> getDictionary() async {
+  static Future<Map<String, Dictionary>> fetchDictionary() async {
     Map<String, Dictionary> dictMap = {};
     var collections = await firestore.collection('dictionary').get();
     for (var snapshot in collections.docs) {
@@ -34,7 +47,7 @@ class FirestoreManager {
   }
 
   // Genreのマップ取得
-  static Future<Map<String, List<String>>> getGenreMap() async {
+  static Future<Map<String, List<String>>> fetchGenreMap() async {
     Map<String, List<String>> genreMap = {};
     var collections = await firestore.collection('genres').get();
     for (var snapshot in collections.docs) {
@@ -51,7 +64,7 @@ class FirestoreManager {
     return genreMap;
   }
 
-  static Future<Map<String, Map<String, List<Item>>>> getItemMap(
+  static Future<Map<String, Map<String, List<Item>>>> fetchItemMap(
       {required Map<String, List<String>> genreMap}) async {
     Map<String, Map<String, List<Item>>> itemMap = {Constants.ALL: {}};
 
@@ -82,5 +95,12 @@ class FirestoreManager {
     }
     itemMap[Constants.ALL]![Constants.ALL] = tmpAllList1;
     return itemMap;
+  }
+
+  static Future<void> insertBugToDb({required String content}) async {
+    firestore.collection('bugs').add({
+      'content': content,
+      'regist_date': DateTime.now(),
+    });
   }
 }
