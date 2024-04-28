@@ -142,55 +142,73 @@ class StartUp extends HookWidget {
 
     if (snapshot.connectionState == ConnectionState.done) {
       if (snapshot.hasData) {
-        return Scaffold(
-          body: SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                // crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Icon(Icons.abc),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-                  const Text(
-                    'アキネータークイズ',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                  TextButton(
-                      onPressed: () async {
-                        // ATT未設定かどうかチェック
-                        final status = await AppTrackingTransparency
-                            .trackingAuthorizationStatus;
-                        if (context.mounted) {
-                          // 未設定の場合、設定ページへ飛ばす
-                          if (status == TrackingStatus.notDetermined) {
-                            Navigator.of(context).push(CupertinoPageRoute(
-                              builder: (context) => const AdmobInitPage(),
-                            ));
-                          } else {
-                            // それ以外は通常のプレイ画面へ
-                            Navigator.of(context).push(CupertinoPageRoute(
-                              builder: (context) => const PlayView(),
-                            ));
-                          }
-                        }
-                      },
-                      child: const Text('play')),
-                  // Container(
-                  //   margin: const EdgeInsets.only(bottom: 5),
-                  //   child: GestureDetector(
-                  //     onTap: () {},
-                  //     child: const Text(
-                  //       'created by アラキホシノスケ',
-                  //       style: TextStyle(fontSize: 12),
-                  //     ),
-                  //   ),
-                  // ),
-                ],
-              ),
-            ),
-          ),
-        );
+        // ATT未設定かどうかチェック
+        // final status = await AppTrackingTransparency
+        //     .trackingAuthorizationStatus;
+        // if (context.mounted) {
+        // 未設定の場合、設定ページへ飛ばす
+        if (attStatus == TrackingStatus.notDetermined) {
+          return const AdmobInitPage();
+          // Navigator.of(context).push(CupertinoPageRoute(
+          //   builder: (context) => const AdmobInitPage(),
+          // ));
+        } else {
+          return const PlayView();
+          // それ以外は通常のプレイ画面へ
+          // Navigator.of(context).push(CupertinoPageRoute(
+          //   builder: (context) => const PlayView(),
+          // ));
+        }
+        // }
+        // return Scaffold(
+        //   body: SafeArea(
+        //     child: Center(
+        //       child: Column(
+        //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        //         // crossAxisAlignment: CrossAxisAlignment.center,
+        //         children: [
+        //           // Icon(Icons.abc),
+        //           SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+        //           const Text(
+        //             'アキネータークイズ',
+        //             style: TextStyle(fontSize: 20),
+        //           ),
+        //           SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+        //           TextButton(
+        //               onPressed: () async {
+        //                 // ATT未設定かどうかチェック
+        //                 final status = await AppTrackingTransparency
+        //                     .trackingAuthorizationStatus;
+        //                 if (context.mounted) {
+        //                   // 未設定の場合、設定ページへ飛ばす
+        //                   if (status == TrackingStatus.notDetermined) {
+        //                     Navigator.of(context).push(CupertinoPageRoute(
+        //                       builder: (context) => const AdmobInitPage(),
+        //                     ));
+        //                   } else {
+        //                     // それ以外は通常のプレイ画面へ
+        //                     Navigator.of(context).push(CupertinoPageRoute(
+        //                       builder: (context) => const PlayView(),
+        //                     ));
+        //                   }
+        //                 }
+        //               },
+        //               child: const Text('play')),
+        //           // Container(
+        //           //   margin: const EdgeInsets.only(bottom: 5),
+        //           //   child: GestureDetector(
+        //           //     onTap: () {},
+        //           //     child: const Text(
+        //           //       'created by アラキホシノスケ',
+        //           //       style: TextStyle(fontSize: 12),
+        //           //     ),
+        //           //   ),
+        //           // ),
+        //         ],
+        //       ),
+        //     ),
+        //   ),
+        // );
       } else {
         return const Scaffold(
           body: Center(

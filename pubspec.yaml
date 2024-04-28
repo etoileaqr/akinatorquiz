@@ -62,6 +62,15 @@ dependencies:
   permission_handler: ^11.3.1
   app_settings: ^5.1.1
   app_tracking_transparency: ^2.0.5
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  ios: true
+  image_path: "assets/file/app_icon.PNG"
+  remove_alpha_ios: true
+  android: true
+  adaptive_icon_background: "assets/file/app_icon.PNG"
+  adaptive_icon_foreground: "assets/file/app_icon.PNG"
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:akinatorquiz/dto/app_data.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'env/env.dart';
@@ -33,6 +34,8 @@ void main() async {
   // テーブル作成
   await SqliteManager.createTables();
 
+  attStatus = await AppTrackingTransparency.trackingAuthorizationStatus;
+
   MobileAds.instance.initialize();
 
   // 開発用
@@ -50,6 +53,8 @@ void main() async {
 
   AppData.instance.isOpeningSettings = false;
 }
+
+late TrackingStatus attStatus;
 
 /* SharedPreferencesのinstance */
 late SharedPreferences prefs;
