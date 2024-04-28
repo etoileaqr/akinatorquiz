@@ -1,6 +1,8 @@
 // ignore_for_file: non_constant_identifier_names, prefer_interpolation_to_compose_strings
 
+// import 'dart:io';
 import 'dart:math';
+import 'package:akinatorquiz/view/my_dialog.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -23,6 +25,7 @@ import '../manager/sqlite_manager.dart';
 import '../util/widget_util.dart';
 import 'custom_text_field_dialog.dart';
 import 'text_input_widget.dart';
+import '../context_extension.dart';
 
 // TextFormField側から更新をかけるために、
 // ChangeNotifierを使うことにした。
@@ -41,7 +44,8 @@ class PlayView extends StatefulWidget {
   State<PlayView> createState() => _PlayViewState();
 }
 
-class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
+class _PlayViewState extends State<PlayView>
+    with WidgetsBindingObserver, MyDialog {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
   AppOpenAdManager appOpenAdManager = AppOpenAdManager();
@@ -520,7 +524,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
     }
 
     InkWell footerButton({
-      required IconData icon,
+      required Widget icon,
       required String label,
       required VoidCallback onPressed,
     }) {
@@ -529,7 +533,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
         child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.14,
           child: Column(children: [
-            Icon(icon),
+            icon,
             Text(label, style: const TextStyle(fontSize: 10))
           ]),
         ),
@@ -545,6 +549,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
         );
 
     return Drawer(
+      width: context.isTablet() ? context.screenWidth * 0.7 : null,
       child: Column(children: [
         StatefulBuilder(
           builder: (context, setState) => DrawerHeader(
@@ -675,9 +680,10 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              footerButton(icon: Icons.help, label: '使い方', onPressed: () {}),
               footerButton(
-                  icon: CupertinoIcons.info,
+                  icon: const Icon(Icons.help), label: '使い方', onPressed: () {}),
+              footerButton(
+                  icon: const Icon(CupertinoIcons.info),
                   label: 'インフォ',
                   onPressed: () {
                     showCupertinoDialog(
@@ -700,7 +706,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                     );
                   }),
               footerButton(
-                  icon: CupertinoIcons.flag,
+                  icon: const Icon(CupertinoIcons.flag),
                   label: 'バグの報告',
                   onPressed: () async {
                     bool sent = await showCupertinoDialog(
@@ -784,15 +790,43 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                       );
                     }
                   }),
-              footerButton(
-                  icon: Icons.share,
+              // if (context.isTablet())
+              //   footerButton(
+              //     icon: Stack(children: [
+              //       const Icon(Icons.share, color: Colors.grey),
+              //       Icon(Icons.clear, color: Colors.grey[350])
+              //     ]),
+              //     label: 'シェア',
+              //     onPressed: () {
+              //       showOkDialog(
+              //         context,
+              //         content: const Text('恐れ入りますが、お使いの端末ではこちらの機能は使用できません。'),
+              //       );
+              //     },
+              //   ),
+              if (!context.isTablet())
+                footerButton(
+                  icon: const Icon(Icons.share),
                   label: 'シェア',
                   onPressed: () async {
                     // TODO リリースしたらホームページのリンク入れる
-                    String shareText = 'アプリ『アキネータークイズ』';
+                    String shareText = '『アキネータークイズ』をプレイしよう!!';
+                    String subject = '『アキネータークイズ』をプレイしよう!!';
+
+                    // if (Platform.isIOS && context.isTablet()) {
+                    //   final box = context.findRenderObject() as RenderBox?;
+                    //   await Share.share(
+                    //     shareText,
+                    //     subject: 'subject',
+                    //     sharePositionOrigin:
+                    //         box!.localToGlobal(Offset.zero) & box.size,
+                    //   );
+                    // } else {
                     // シェアする文章を引数で渡す
-                    await Share.share(shareText);
-                  }),
+                    await Share.share(shareText, subject: subject);
+                    // }
+                  },
+                ),
             ],
           ),
         ),
