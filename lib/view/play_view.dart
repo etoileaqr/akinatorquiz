@@ -1,13 +1,10 @@
 // ignore_for_file: non_constant_identifier_names, prefer_interpolation_to_compose_strings
 
-// import 'dart:io';
 import 'dart:math';
-import 'package:akinatorquiz/view/my_dialog.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -26,6 +23,7 @@ import '../util/widget_util.dart';
 import 'custom_text_field_dialog.dart';
 import 'text_input_widget.dart';
 import '../context_extension.dart';
+import 'my_dialog.dart';
 
 // TextFormField側から更新をかけるために、
 // ChangeNotifierを使うことにした。
