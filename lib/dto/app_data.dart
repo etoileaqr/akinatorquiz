@@ -28,6 +28,8 @@ class AppData {
   String answer = '東京';
   List<Post> posts = [];
 
+  bool isOpeningSettings = false;
+
   /* genre */
   String get genre => prefs.getString('genre') ?? 'subjects';
   set genre(String value) {
@@ -38,5 +40,11 @@ class AppData {
   String get category => prefs.getString('category') ?? 'world_cities';
   set category(String value) {
     prefs.setString('category', value);
+  }
+
+  /* shouldShowAd */
+  bool get shouldShowAd => prefs.getBool('shouldShowAd') ?? false;
+  set shouldShowAd(bool value) {
+    prefs.setBool('shouldShowAd', value);
   }
 }

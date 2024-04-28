@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:akinatorquiz/view/play_view.dart';
+// import 'package:akinatorquiz/view/play_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -33,28 +33,31 @@ class BannerAdManager {
 
 class AppOpenAdManager implements AppOpenAdLoadCallback {
   AppOpenAd? _appOpenAd;
-  // bool _isAdLoaded = false;
 
-  void loadAd() {
-    SystemChrome.setEnabledSystemUIMode(
+  Future<void> loadAd() async {
+    await SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
       overlays: <SystemUiOverlay>[],
     );
+    await Future.delayed(const Duration(milliseconds: 1));
     AppOpenAd.load(
       adUnitId: getAppOpenAdUnitId(),
       request: const AdRequest(),
       adLoadCallback: AppOpenAdLoadCallback(
         onAdLoaded: (ad) {
           _appOpenAd = ad;
-          // _isAdLoaded = true;
-          _appOpenAd?.show();
+          _appOpenAd?.show().then((value) {
+            SystemChrome.setEnabledSystemUIMode(
+              SystemUiMode.manual,
+              overlays: SystemUiOverlay.values,
+            );
+          });
         },
         onAdFailedToLoad: (error) {
           // print('App open ad failed to load: $error');
         },
       ),
     );
-    isAppOpenAdShowing = true;
   }
 
   String getAppOpenAdUnitId() {

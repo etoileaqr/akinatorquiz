@@ -1,4 +1,6 @@
 import 'package:akinatorquiz/model/typo.dart';
+import 'package:akinatorquiz/view/admob_init_page.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +26,7 @@ Stream<double> fetchMstFromFirestore() async* {
     }
     yield 0.1;
 
-    List<dynamic> allLocalVersions = await sqliteDb!.query(Constants.VERSIONS);
+    List<dynamic> allLocalVersions = await sqliteDb.query(Constants.VERSIONS);
     if (allLocalVersions.isEmpty) {
       await SqliteManager.initMstVersions();
     }
@@ -50,13 +52,15 @@ Stream<double> fetchMstFromFirestore() async* {
           mstName: Constants.TYPOS,
         );
       } else {
-        List<dynamic> l = await sqliteDb!.query(Constants.TYPOS);
+        List<dynamic> l = await sqliteDb.query(Constants.TYPOS);
         typos = l.map((data) => Typo.fromJson(data)).toList();
       }
       // 4.DTOで保持
       AppData.instance.typos = typos;
     } catch (e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
     } finally {
       yield 0.2;
     }
@@ -153,10 +157,23 @@ class StartUp extends HookWidget {
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.2),
                   TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(CupertinoPageRoute(
-                          builder: (context) => const PlayView(),
-                        ));
+                      onPressed: () async {
+                        // ATT未設定かどうかチェック
+                        final status = await AppTrackingTransparency
+                            .trackingAuthorizationStatus;
+                        if (context.mounted) {
+                          // 未設定の場合、設定ページへ飛ばす
+                          if (status == TrackingStatus.notDetermined) {
+                            Navigator.of(context).push(CupertinoPageRoute(
+                              builder: (context) => const AdmobInitPage(),
+                            ));
+                          } else {
+                            // それ以外は通常のプレイ画面へ
+                            Navigator.of(context).push(CupertinoPageRoute(
+                              builder: (context) => const PlayView(),
+                            ));
+                          }
+                        }
                       },
                       child: const Text('play')),
                   // Container(

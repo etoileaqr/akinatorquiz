@@ -1,13 +1,11 @@
 // ignore_for_file: non_constant_identifier_names, prefer_interpolation_to_compose_strings
 
 import 'dart:math';
-import 'package:akinatorquiz/manager/firestore_manager.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+// import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -17,12 +15,14 @@ import '../dto/app_data.dart';
 import '../main.dart';
 import '../manager/admob_manager.dart';
 import '../manager/chat_gpt_manager.dart';
+import '../manager/firestore_manager.dart';
 import '../model/post.dart';
 import '../model/item.dart';
 import '../util/common_util.dart';
 import '../manager/sqlite_manager.dart';
 import '../util/widget_util.dart';
 import 'custom_text_field_dialog.dart';
+import 'text_input_widget.dart';
 
 // TextFormField側から更新をかけるために、
 // ChangeNotifierを使うことにした。
@@ -32,7 +32,7 @@ class StateController with ChangeNotifier {
   }
 }
 
-bool isAppOpenAdShowing = false;
+// bool isAppOpenAdShowing = false;
 
 class PlayView extends StatefulWidget {
   const PlayView({super.key});
@@ -58,13 +58,23 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
         break;
       case AppLifecycleState.paused:
         // print('停止されたときの処理');
+        if (!AppData.instance.isOpeningSettings) {
+          AppData.instance.shouldShowAd = true;
+        }
+
         break;
       case AppLifecycleState.resumed:
         // print('再開されたときの処理');
-        appOpenAdManager.loadAd();
+        if (AppData.instance.shouldShowAd) {
+          appOpenAdManager.loadAd();
+          AppData.instance.shouldShowAd = false;
+        }
+        AppData.instance.isOpeningSettings = false;
         break;
       case AppLifecycleState.detached:
         // print('破棄されたときの処理');
+        AppData.instance.shouldShowAd = false;
+        AppData.instance.isOpeningSettings = false;
         break;
       default:
       // print('default');
@@ -87,24 +97,23 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     Future(() async {
       AppData.instance.posts = [];
+      await _initialize();
       List<Post> posts = await SqliteManager.selectPosts(
           genre: AppData.instance.genre, category: AppData.instance.category);
-      if (posts.isNotEmpty) {
+      if (posts.length > 1) {
         if (posts.last.content.contains('選択したので当ててください')) {
           posts.removeLast();
         }
       }
       AppData.instance.posts = posts;
       await _localSave();
+      prefs.setBool('isFirst', false);
+      _localData = SqliteManager.selectPostsGroupBy();
       setState(() {});
     });
-
-    _localData = SqliteManager.selectPostsGroupBy();
-    _initialize();
-    // _getFuture();
   }
 
-  void _initialize() {
+  Future<void> _initialize() async {
     List<Item> tmpList = AppData
         .instance.itemMap[AppData.instance.genre]![AppData.instance.category]!;
     String scope = AppData.instance.scope;
@@ -122,7 +131,10 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
     Item answerItem;
     if (isFirst) {
       answerItem = Item(scope: 'アジア', name: '東京');
-      prefs.setBool('isFirst', false);
+      Post p = Post.chatGpt(
+          content:
+              '都市を選択したので当ててください。' '\nAIの都合上、答えるときは必ず' '\n「答えは〜」で始めてください🙏');
+      SqliteManager.insertPost(post: p);
     } else {
       answerItem = targetList[Random().nextInt(targetList.length)];
     }
@@ -168,13 +180,6 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (isAppOpenAdShowing) {
-      SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual,
-        overlays: SystemUiOverlay.values,
-      );
-      isAppOpenAdShowing = false;
-    }
     // アイコンのサイズ
     double r = 30;
     double textWidth = MediaQuery.of(context).size.width * 0.8;
@@ -344,7 +349,7 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
               } else {
                 await _localSave();
                 if (AppData.instance.posts.isEmpty) {
-                  _initialize();
+                  await _initialize();
                 } else {
                   AppData.instance.answer = AppData.instance.posts.last.answer;
                 }
@@ -387,41 +392,46 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                   // const SizedBox(
                   //   height: 3,
                   // ),
-                  FloatingActionButton.small(
-                      heroTag: 'hero3',
-                      shape: const CircleBorder(),
-                      foregroundColor: (AppData.instance.posts.last.content
-                              .contains('選択したので当ててください'))
-                          ? Colors.grey[350]
-                          : Colors.black,
-                      backgroundColor: (AppData.instance.posts.last.content
-                              .contains('選択したので当ててください'))
-                          ? Colors.grey[400]!.withOpacity(0.7)
-                          : Colors.blue[200],
-                      onPressed: (AppData.instance.posts.last.content
-                              .contains('選択したので当ててください'))
-                          ? null
-                          : () async {
-                              await _localSave();
-                              _initialize();
-                              // 画面の再描画
-                              setState(() {});
-                            },
-                      child: Stack(children: [
-                        const Icon(Icons.autorenew),
-                        if (AppData.instance.posts.last.content
-                            .contains('選択したので当ててください'))
-                          Icon(
-                            Icons.clear,
-                            color: Colors.grey[350],
-                          )
-                      ])),
+                  //
+                  _FloatingActionButton(),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  FloatingActionButton _FloatingActionButton() {
+    bool flg = false;
+    if (AppData.instance.posts.isNotEmpty) {
+      if (AppData.instance.posts.last.content.contains('選択したので当ててください')) {
+        flg = true;
+      }
+    }
+    return FloatingActionButton.small(
+      heroTag: 'hero3',
+      shape: const CircleBorder(),
+      foregroundColor: flg ? Colors.grey[350] : Colors.black,
+      backgroundColor:
+          flg ? Colors.grey[400]!.withOpacity(0.7) : Colors.blue[200],
+      onPressed: flg
+          ? null
+          : () async {
+              await _localSave();
+              await _initialize();
+              // 画面の再描画
+              setState(() {});
+            },
+      child: Stack(children: [
+        const Icon(Icons.autorenew),
+        if (flg)
+          Icon(
+            Icons.clear,
+            color: Colors.grey[350],
+          )
+      ]),
     );
   }
 
@@ -740,7 +750,9 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
                                 await FirestoreManager.insertBugToDb(
                                     content: content);
                               } catch (e) {
-                                print(e);
+                                if (kDebugMode) {
+                                  print(e);
+                                }
                               }
                             },
                           );
@@ -785,106 +797,6 @@ class _PlayViewState extends State<PlayView> with WidgetsBindingObserver {
           ),
         ),
       ]),
-    );
-  }
-}
-
-/// TextFormField側のウィジェット
-// 画面全体を再描画しないように分ける
-class TextInputWidget extends HookWidget {
-  const TextInputWidget({super.key, required this.getFuture});
-  // こちらからStreamメソッドを呼び出せるよう、関数をパラメータで渡す
-  final Function getFuture;
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = useTextEditingController();
-    // 空文字で送れないようにフラグを用意
-    final canSend = useState<bool>(false);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: MediaQuery.of(context).size.width * 0.8,
-          child: TextField(
-            keyboardType: TextInputType.multiline,
-            onChanged: (value) {
-              // 空文字以外なら送信可能とする
-              if (value.isEmpty) {
-                canSend.value = false;
-              } else {
-                canSend.value = true;
-              }
-            },
-            controller: controller,
-            maxLines: 10,
-            minLines: 1,
-            decoration: InputDecoration(
-              suffixIcon: controller.text.isEmpty
-                  ? IconButton(
-                      onPressed: () async {
-                        //TODO 樋山さんへ
-                        // ここに音声認識処理を実装かな？と思っております
-                        // ※_controller.textに代入
-                      },
-                      icon: Icon(
-                        Icons.mic,
-                        color: Colors.grey[800],
-                      ),
-                    )
-                  : null,
-              hintText: 'Message',
-              hintStyle: const TextStyle(color: Colors.grey),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-              border: const OutlineInputBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(20),
-                ),
-              ),
-            ),
-          ),
-        ),
-        // 余白
-        const SizedBox(
-          width: 10,
-        ),
-        // 送信ボタン
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: controller.text.isEmpty ? Colors.grey[400] : Colors.black,
-          ),
-          child: IconButton(
-            onPressed: controller.text.isEmpty
-                ? null
-                : () {
-                    // 質問のインスタンスを生成し、dtoに格納
-                    Post yourPost = Post.you(content: controller.text);
-                    AppData.instance.yourPost = yourPost;
-                    AppData.instance.posts.add(yourPost);
-
-                    // dtoに格納したのでTextEditingControllerの中身を空にする
-                    controller.clear();
-                    // 送信ボタンを非活性にする
-                    canSend.value = false;
-                    // 再描画の際にデータを再取得できるよう、フラグを下ろす
-                    AppData.instance.alreadyLoaded = false;
-
-                    // Streamメソッドを呼び出す
-                    getFuture();
-                    // setStateNotifierを呼び出す
-                    context.read<StateController>().setStateNotify();
-                  },
-            icon: const Icon(
-              Icons.arrow_upward,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

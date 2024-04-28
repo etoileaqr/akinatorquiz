@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:akinatorquiz/dto/app_data.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import 'env/env.dart';
 
 import 'package:animated_splash_screen/animated_splash_screen.dart';
@@ -16,16 +19,23 @@ import 'view/start_up.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Firebaseの初期化
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
+  // SharedPreferencesのインスタンスを取得
   prefs = await SharedPreferences.getInstance();
+  // エミュレーターかどうか
   isEmulator = await distinguishIfIsEmulator();
   runApp(const MyApp());
+  // SQLiteDBのインスタンスを取得
+  sqliteDb = await SqliteManager.openAndGetDbInstance();
+  // テーブル作成
+  await SqliteManager.createTables();
 
-  sqliteDb = await SqliteManager.createTables();
+  MobileAds.instance.initialize();
 
+  // 開発用
   // List<List<String>> li = await FileUtil.loadCsv('assets/dev/cities.csv');
   // List<Content> cList = [];
   // for (var v in li) {
@@ -37,6 +47,8 @@ void main() async {
   //   collectionName: 'world_cities',
   //   list: cList,
   // );
+
+  AppData.instance.isOpeningSettings = false;
 }
 
 /* SharedPreferencesのinstance */
@@ -44,7 +56,7 @@ late SharedPreferences prefs;
 /* Firebase.Firestoreのinstance */
 final firestore = FirebaseFirestore.instance;
 /* SQLiteのインスタンス */
-Database? sqliteDb;
+late Database sqliteDb;
 /* gitに公開するので実際のトークンは伏せておきます。 */
 // const token = 'Actual TOKEN is supposed to be written here';
 final openAI = OpenAI.instance.build(
