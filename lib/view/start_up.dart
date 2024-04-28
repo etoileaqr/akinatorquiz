@@ -212,7 +212,7 @@ class StartUp extends HookWidget {
       } else {
         return const Scaffold(
           body: Center(
-            child: Text('アキネータークイズ'),
+            child: Text('ネットワーク接続の確認をお願いします!!'),
           ),
         );
       }
