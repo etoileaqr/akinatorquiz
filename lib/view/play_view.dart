@@ -82,6 +82,7 @@ class _PlayViewState extends State<PlayView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // _animationController.dispose();
     _scrollController.dispose();
     nameController.dispose();
     appOpenAdManager.dispose();
@@ -330,44 +331,116 @@ class _PlayViewState extends State<PlayView>
               }
             },
             // floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
-            floatingActionButton: Visibility(
-              visible: MediaQuery.of(context).viewInsets.bottom < 200,
-              child: Container(
-                margin: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top +
-                      MediaQuery.of(context).size.height * 0.15 +
-                      20,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    FloatingActionButton(
-                      heroTag: 'hero1',
-                      shape: const CircleBorder(),
-                      foregroundColor: Colors.black,
-                      backgroundColor: Colors.grey[200],
-                      onPressed: () {
-                        _key.currentState!.openDrawer();
-                      },
-                      child: const Icon(CupertinoIcons.list_bullet),
-                    ),
-                    const SizedBox(
-                      height: 7,
-                    ),
-                    _LevelChangeButton(),
-                    const SizedBox(
-                      height: 3,
-                    ),
-                    _FloatingActionButton(),
-                  ],
-                ),
+            floatingActionButton: Container(
+              margin: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top +
+                    MediaQuery.of(context).size.height * 0.15 +
+                    20,
               ),
+              child: _Column(),
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _Column() {
+    bool flg = (MediaQuery.of(context).viewInsets.bottom < 200);
+
+    if (flg) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'hero1',
+            shape: const CircleBorder(),
+            foregroundColor: Colors.black,
+            backgroundColor: Colors.grey[200],
+            onPressed: () {
+              _key.currentState!.openDrawer();
+            },
+            child: const Icon(CupertinoIcons.list_bullet),
+          ),
+          const SizedBox(
+            height: 7,
+          ),
+          _LevelChangeButton(),
+          const SizedBox(
+            height: 3,
+          ),
+          _FloatingActionButton(),
+        ],
+      );
+    } else {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // ignore: avoid_unnecessary_containers
+          Container(
+            // margin: const EdgeInsets.only(bottom: 70),
+            child: FloatingActionButton(
+              heroTag: 'hero4',
+              shape: const CircleBorder(),
+              onPressed: () async {
+                List<Option> optionList = getOptionList();
+                primaryFocus?.unfocus();
+                await Future.delayed(const Duration(milliseconds: 100));
+                int? selected;
+                if (mounted) {
+                  selected = await showOptionsDialog(
+                    context,
+                    message: '以下からヒントをお選びください',
+                    optionList: optionList,
+                  );
+                }
+
+                if (selected != null) {
+                  if (mounted) {
+                    if (selected == 1) {
+                      String char = appData.answer.substring(0, 1);
+                      showOkDialog(
+                        context,
+                        content: Text('最初の1文字目は「$char」です'),
+                        needTitle: false,
+                      );
+                    } else {
+                      int i = appData.answer.length;
+                      showOkDialog(
+                        context,
+                        content: Text('文字数は$i文字です'),
+                        needTitle: false,
+                      );
+                    }
+                  }
+                }
+              },
+              child: Image.asset('assets/file/hint.png'),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  List<Option> getOptionList() {
+    List<Option> optionList = [];
+    if (appData.category == 'world_cities') {
+      Option opt1 = Option(id: 1, value: '最初の1文字目をみる');
+      Option opt2 = Option(id: 2, value: '文字数をみる');
+      optionList = [opt1, opt2];
+    } else if (appData.category == 'elements') {
+      Option opt1 = Option(id: 1, value: '最初の1文字目をみる');
+      Option opt2 = Option(id: 2, value: '文字数をみる');
+      optionList = [opt1, opt2];
+    } else {
+      Option opt1 = Option(id: 1, value: '最初の1文字目をみる');
+      Option opt2 = Option(id: 2, value: '文字数をみる');
+      optionList = [opt1, opt2];
+    }
+    return optionList;
   }
 
   FloatingActionButton _LevelChangeButton() {
@@ -676,8 +749,8 @@ class _PlayViewState extends State<PlayView>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              footerButton(
-                  icon: const Icon(Icons.help), label: '使い方', onPressed: () {}),
+              // footerButton(
+              //     icon: const Icon(Icons.help), label: '使い方', onPressed: () {}),
               footerButton(
                   icon: const Icon(CupertinoIcons.info),
                   label: 'インフォ',

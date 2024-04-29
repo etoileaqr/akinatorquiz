@@ -6,13 +6,14 @@ mixin MyDialog {
   Future<void> showOkDialog(
     BuildContext ctxt, {
     required Widget content,
+    bool needTitle = true,
   }) async {
     TextStyle _TextStyle = const TextStyle(color: CupertinoColors.activeBlue);
     await showCupertinoDialog<void>(
       barrierDismissible: true,
       context: ctxt,
       builder: (_) => CupertinoAlertDialog(
-        title: const Text('確認'),
+        title: needTitle ? const Text('確認') : null,
         content: content,
         actions: [
           CupertinoDialogAction(
@@ -52,4 +53,50 @@ mixin MyDialog {
     // 領域外タップを考慮して、「?? false」にする
     return goToSetting ?? false;
   }
+
+  Future<int?> showOptionsDialog(
+    BuildContext ctxt, {
+    required String message,
+    required List<Option> optionList,
+  }) async {
+    TextStyle _TextStyle = const TextStyle(color: CupertinoColors.activeBlue);
+    int? selectedOptionId = await showCupertinoDialog<int>(
+      barrierDismissible: true, // 領域外タップはnullが返る
+      context: ctxt,
+      builder: (_) => CupertinoAlertDialog(
+        // title: const Text('確認'),
+        content: Text(message),
+        actions: [
+          for (var option in optionList) ...{
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(_).pop(option.id),
+              isDefaultAction: option.isDefaultAction,
+              isDestructiveAction: option.isDestructiveAction,
+              child: Text(option.value, style: _TextStyle),
+            ),
+          },
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(_).pop(null),
+            isDestructiveAction: true,
+            child: const Text('キャンセル'),
+          ),
+        ],
+      ),
+    );
+    // 領域外タップを考慮して、「?? false」にする
+    return selectedOptionId;
+  }
+}
+
+class Option {
+  Option({
+    required this.id,
+    required this.value,
+    this.isDefaultAction = false,
+    this.isDestructiveAction = false,
+  });
+  final int id;
+  final String value;
+  final bool isDefaultAction;
+  final bool isDestructiveAction;
 }
