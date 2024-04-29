@@ -1,10 +1,12 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../constants.dart';
 // import '../model/dictionary.dart';
+import '../dto/app_data.dart';
 import '../model/post.dart';
 import '../main.dart';
 import '../model/typo.dart';
@@ -95,8 +97,11 @@ class SqliteManager {
       );
     } catch (e) {
       // TODO 本来はupsertしたいが、今は一旦握りつぶすことで対処している・・
-      // print(e);
+      if (kDebugMode) {
+        // print(e);
+      }
     }
+    // print(id);
     return id;
   }
 
@@ -175,4 +180,22 @@ class SqliteManager {
   //     await sqliteDb.insert(Constants.TYPOS, typo.toJson());
   //   }
   // }
+
+  static Future<void> localSave({required bool needReset}) async {
+    if (needReset) {
+      await deletePosts(
+        genre: AppData.instance.genre,
+        category: AppData.instance.category,
+      );
+      AppData().posts = [];
+    }
+    // まずdtoで持っているPostsをSqliteに登録する
+    for (Post post in AppData.instance.posts) {
+      await insertPost(post: post);
+    }
+    AppData.instance.posts = [];
+    List<Post> posts = await selectPosts(
+        genre: AppData.instance.genre, category: AppData.instance.category);
+    AppData.instance.posts = posts;
+  }
 }

@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+
+import '../dto/app_data.dart';
 import '../model/post.dart';
 
 class CommonUtil {
@@ -44,5 +47,31 @@ class CommonUtil {
     }
 
     return map;
+  }
+
+  static ({String label, Color color}) getLabelAndColor() {
+    String label;
+    Color color;
+    switch (AppData().level) {
+      case 1:
+        label = '易';
+        color = Colors.lightGreenAccent[100]!;
+        break;
+      case 2:
+        label = '中';
+        color = Colors.yellowAccent[100]!;
+        break;
+      case 3:
+        label = '難';
+        color = Colors.pink[100]!;
+        break;
+      default:
+        label = '易';
+        color = Colors.lightGreenAccent[100]!;
+        AppData().level = 1;
+        break;
+    }
+    ({String label, Color color}) record = (label: label, color: color);
+    return record;
   }
 }

@@ -14,8 +14,10 @@ class ChatGptManager {
     String realAnswer = yourPost.answer;
     String yourAnswer = yourPost.content;
     if (yourAnswer.contains(realAnswer)) {
+      AppData.instance.hasAlreadyAnswered = true;
       return 'はい、正解です！答えは$realAnswerです';
     } else if (yourAnswer.contains('教え')) {
+      AppData.instance.hasAlreadyAnswered = true;
       return '答えは「$realAnswer」です!!';
     } else {
       String text = '残念ながら不正解です...' '\n答えを見る場合は、「答えを教えて」と言ってください。';
@@ -39,14 +41,23 @@ class ChatGptManager {
       //     .asBroadcastStream();
       messagesList ??= [];
 
+      String content = AppData.instance.yourPost!.content;
+
+      String cate = AppData.instance.dictMap[AppData.instance.category]!.ja;
+      String sss = 'その' + cate;
+
       try {
         String question = '';
         if (hasInconsistency) {
           question = 'どっちですか？';
+        } else if (content.contains(sss)) {
+          question = content.replaceAll(sss, AppData.instance.yourPost!.answer);
         } else {
-          question = AppData.instance.yourPost!.answer +
-              'は' +
-              AppData.instance.yourPost!.content;
+          question = AppData.instance.yourPost!.answer + 'は' + content;
+        }
+
+        if (AppData.instance.hasAlreadyAnswered) {
+          annotation = '50文字以内で簡潔に答えてください。';
         }
         messagesList = [
           ...messagesList,

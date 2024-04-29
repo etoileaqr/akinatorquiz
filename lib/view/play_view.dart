@@ -11,7 +11,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../constants.dart';
 import '../dto/app_data.dart';
-import '../main.dart';
 import '../manager/admob_manager.dart';
 import '../manager/chat_gpt_manager.dart';
 import '../manager/firestore_manager.dart';
@@ -24,6 +23,7 @@ import 'custom_text_field_dialog.dart';
 import 'text_input_widget.dart';
 import '../context_extension.dart';
 import 'my_dialog.dart';
+import 'my_indicator.dart';
 
 // TextFormField側から更新をかけるために、
 // ChangeNotifierを使うことにした。
@@ -33,8 +33,6 @@ class StateController with ChangeNotifier {
   }
 }
 
-// bool isAppOpenAdShowing = false;
-
 class PlayView extends StatefulWidget {
   const PlayView({super.key});
 
@@ -43,45 +41,42 @@ class PlayView extends StatefulWidget {
 }
 
 class _PlayViewState extends State<PlayView>
-    with WidgetsBindingObserver, MyDialog {
+    with WidgetsBindingObserver, MyDialog, MyIndicator {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _key = GlobalKey<ScaffoldState>();
   AppOpenAdManager appOpenAdManager = AppOpenAdManager();
   Future<List<Post>>? _localData;
   Future<String?>? _future;
   TextEditingController nameController = TextEditingController();
+  AppData appData = AppData();
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
-    // print("state = $state");
     switch (state) {
       case AppLifecycleState.inactive:
         // print('非アクティブになったときの処理');
         break;
       case AppLifecycleState.paused:
         // print('停止されたときの処理');
-        if (!AppData.instance.isOpeningSettings) {
-          AppData.instance.shouldShowAd = true;
+        if (!appData.isOpeningSettings) {
+          appData.shouldShowAd = true;
         }
-
         break;
       case AppLifecycleState.resumed:
         // print('再開されたときの処理');
-        if (AppData.instance.shouldShowAd) {
+        if (appData.shouldShowAd) {
           appOpenAdManager.loadAd();
-          AppData.instance.shouldShowAd = false;
+          appData.shouldShowAd = false;
         }
-        AppData.instance.isOpeningSettings = false;
+        appData.isOpeningSettings = false;
         break;
       case AppLifecycleState.detached:
         // print('破棄されたときの処理');
-        AppData.instance.shouldShowAd = false;
-        AppData.instance.isOpeningSettings = false;
+        appData.shouldShowAd = false;
+        appData.isOpeningSettings = false;
         break;
       default:
-      // print('default');
     }
-    // print(DateTime.now());
   }
 
   @override
@@ -98,72 +93,48 @@ class _PlayViewState extends State<PlayView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     Future(() async {
-      AppData.instance.posts = [];
+      appData.posts = [];
       await _initialize();
       List<Post> posts = await SqliteManager.selectPosts(
-          genre: AppData.instance.genre, category: AppData.instance.category);
-      if (posts.length > 1) {
-        if (posts.last.content.contains('選択したので当ててください')) {
-          posts.removeLast();
-        }
-      }
-      AppData.instance.posts = posts;
-      await _localSave();
-      prefs.setBool('isFirst', false);
+          genre: appData.genre, category: appData.category);
+      appData.posts = posts;
+      await SqliteManager.localSave(needReset: false);
+      appData.isFirst = false;
       _localData = SqliteManager.selectPostsGroupBy();
       setState(() {});
     });
   }
 
   Future<void> _initialize() async {
-    List<Item> tmpList = AppData
-        .instance.itemMap[AppData.instance.genre]![AppData.instance.category]!;
-    String scope = AppData.instance.scope;
+    appData.hasAlreadyAnswered = false;
+    List<Item> tmpList = appData.itemMap[appData.genre]![appData.category]!;
+    int level = appData.level;
     List<Item> targetList = [];
-    if (scope.isEmpty) {
-      targetList = tmpList;
-    } else {
-      for (Item item in tmpList) {
-        if (item.scope == scope) {
-          targetList.add(item);
-        }
+    for (Item item in tmpList) {
+      if (item.level <= level) {
+        targetList.add(item);
       }
     }
-    bool isFirst = prefs.getBool('isFirst') ?? true;
+
     Item answerItem;
-    if (isFirst) {
-      answerItem = Item(scope: 'アジア', name: '東京');
-      Post p = Post.chatGpt(
-          content:
-              '都市を選択したので当ててください。' '\nAIの都合上、答えるときは必ず' '\n「答えは〜」で始めてください🙏');
+    if (appData.isFirst) {
+      answerItem = Item(level: 1, name: '東京');
+      Post p = Post.chatGpt(content: '都市を' + Constants.qSentence);
       SqliteManager.insertPost(post: p);
     } else {
       answerItem = targetList[Random().nextInt(targetList.length)];
     }
 
-    AppData.instance.answer = answerItem.name;
-    String s = '';
-    if (AppData.instance.category == 'world_cities') {
-      s = '都市を選択したので当ててください。' '\nAIの都合上、答えるときは必ず' '\n「答えは〜」で始めてください🙏';
-    } else {
-      s = '選択したので当ててください。' '\nAIの都合上、答えるときは必ず' '\n「答えは〜」で始めてください🙏';
+    appData.answer = answerItem.name;
+    String s = Constants.qSentence;
+    if (appData.dictMap.containsKey(appData.category)) {
+      String jCate = appData.dictMap[appData.category]!.ja;
+      jCate = jCate.replaceFirst('世界の', '');
+      s = jCate + 'を' + s;
     }
-    if (kDebugMode) {
-      print(answerItem.name);
-    }
-    Post firstPost = Post.chatGpt(content: s);
-    AppData.instance.posts.add(firstPost);
-  }
 
-  Future<void> _localSave() async {
-    // まずdtoで持っているPostsをSqliteに登録する
-    for (Post post in AppData.instance.posts) {
-      await SqliteManager.insertPost(post: post);
-    }
-    AppData.instance.posts = [];
-    List<Post> posts = await SqliteManager.selectPosts(
-        genre: AppData.instance.genre, category: AppData.instance.category);
-    AppData.instance.posts = posts;
+    Post firstPost = Post.chatGpt(content: s);
+    appData.posts.add(firstPost);
   }
 
   // Streamの取得メソッド
@@ -207,7 +178,10 @@ class _PlayViewState extends State<PlayView>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 名前
-                  Text(isChatGpt ? Constants.CHAT_GPT : 'You', style: hStyle),
+                  Text(
+                    isChatGpt ? Constants.CHAT_GPT : appData.userName,
+                    style: hStyle,
+                  ),
                   // content
                   Text(message, overflow: TextOverflow.visible, style: cStyle),
                 ],
@@ -221,7 +195,7 @@ class _PlayViewState extends State<PlayView>
     // メンテが楽なようにまとめただけ
     Widget postTileParentWidget() {
       return Column(children: [
-        for (Post p in AppData.instance.posts)
+        for (Post p in appData.posts)
           postTile(isChatGpt: p.isChatGpt, message: p.content),
       ]);
     }
@@ -235,10 +209,6 @@ class _PlayViewState extends State<PlayView>
           canPop: false,
           child: Scaffold(
             key: _key,
-            // appBar: AppBar(
-            //   title: const Text('ホーム'),
-            //   automaticallyImplyLeading: false,
-            // ),
             body: SafeArea(
               child: Consumer<StateController>(builder: (context, ctrl, child) {
                 // 最終行までスクロールする
@@ -267,15 +237,15 @@ class _PlayViewState extends State<PlayView>
                               if (snapshot.hasData) {
                                 // 取得が終わってから格納する
                                 // 何度も追加してしまわないように、フラグを見る
-                                if (!AppData.instance.alreadyLoaded) {
+                                if (!appData.alreadyLoaded) {
                                   // 取得したデータをもとにインスタンスを作成し、dtoに格納
                                   String chatGptAnswer = snapshot.data!;
                                   Post post =
                                       Post.chatGpt(content: chatGptAnswer);
-                                  AppData.instance.posts.add(post);
+                                  appData.posts.add(post);
 
                                   // 追加が完了したのでフラグを立てる
-                                  AppData.instance.alreadyLoaded = true;
+                                  appData.alreadyLoaded = true;
                                 }
 
                                 return postTileParentWidget();
@@ -286,7 +256,7 @@ class _PlayViewState extends State<PlayView>
                                 ConnectionState.none) {
                               _goToLast();
                               return Column(children: [
-                                for (Post p in AppData.instance.posts)
+                                for (Post p in appData.posts)
                                   postTile(
                                       isChatGpt: p.isChatGpt,
                                       message: p.content),
@@ -349,54 +319,49 @@ class _PlayViewState extends State<PlayView>
               if (whenOpen) {
                 _localData = SqliteManager.selectPostsGroupBy();
               } else {
-                await _localSave();
-                if (AppData.instance.posts.isEmpty) {
+                await SqliteManager.localSave(needReset: false);
+                if (appData.posts.isEmpty) {
                   await _initialize();
                 } else {
-                  AppData.instance.answer = AppData.instance.posts.last.answer;
+                  appData.answer = appData.posts.last.answer;
                 }
                 // 画面の再描画
                 setState(() {});
               }
             },
             // floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
-            floatingActionButton: Container(
-              margin: EdgeInsets.only(
+            floatingActionButton: Visibility(
+              visible: MediaQuery.of(context).viewInsets.bottom < 200,
+              child: Container(
+                margin: EdgeInsets.only(
                   top: MediaQuery.of(context).padding.top +
                       MediaQuery.of(context).size.height * 0.15 +
-                      20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  FloatingActionButton(
-                    heroTag: 'hero1',
-                    shape: const CircleBorder(),
-                    foregroundColor: Colors.black,
-                    backgroundColor: Colors.grey[200],
-                    onPressed: () {
-                      // await Future.delayed(Duration(seconds: 5));
-                      _key.currentState!.openDrawer();
-                    },
-                    child: const Icon(CupertinoIcons.list_bullet),
-                  ),
-                  const SizedBox(
-                    height: 5,
-                  ),
-                  // FloatingActionButton.small(
-                  //   heroTag: 'hero2',
-                  //   shape: const CircleBorder(),
-                  //   foregroundColor: Colors.grey[700],
-                  //   backgroundColor: Colors.grey[200],
-                  //   onPressed: () {},
-                  //   child: const Icon(Icons.filter_alt_outlined),
-                  // ),
-                  // const SizedBox(
-                  //   height: 3,
-                  // ),
-                  //
-                  _FloatingActionButton(),
-                ],
+                      20,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: 'hero1',
+                      shape: const CircleBorder(),
+                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.grey[200],
+                      onPressed: () {
+                        _key.currentState!.openDrawer();
+                      },
+                      child: const Icon(CupertinoIcons.list_bullet),
+                    ),
+                    const SizedBox(
+                      height: 7,
+                    ),
+                    _LevelChangeButton(),
+                    const SizedBox(
+                      height: 3,
+                    ),
+                    _FloatingActionButton(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -405,30 +370,68 @@ class _PlayViewState extends State<PlayView>
     );
   }
 
+  FloatingActionButton _LevelChangeButton() {
+    final record = CommonUtil.getLabelAndColor();
+    String label = record.label;
+    Color color = record.color;
+
+    return FloatingActionButton.small(
+      heroTag: 'hero2',
+      shape: const CircleBorder(),
+      backgroundColor: color,
+      onPressed: () async {
+        switch (appData.level) {
+          case 1:
+            appData.level = 2;
+            break;
+          case 2:
+            appData.level = 3;
+            break;
+          case 3:
+            appData.level = 1;
+            break;
+        }
+        await SqliteManager.localSave(needReset: true);
+
+        // リセット感を出すために、0.1秒間だけQuestionがない瞬間を作る
+        setState(() {});
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        await _initialize();
+        // 画面の再描画
+        setState(() {});
+      },
+      child: Text(label),
+    );
+  }
+
   FloatingActionButton _FloatingActionButton() {
-    bool flg = false;
-    if (AppData.instance.posts.isNotEmpty) {
-      if (AppData.instance.posts.last.content.contains('選択したので当ててください')) {
-        flg = true;
-      }
+    bool hasAnswer = false;
+    if (appData.posts.length > 1) {
+      hasAnswer = true;
     }
     return FloatingActionButton.small(
       heroTag: 'hero3',
       shape: const CircleBorder(),
-      foregroundColor: flg ? Colors.grey[350] : Colors.black,
+      foregroundColor: hasAnswer ? Colors.black : Colors.grey[350],
       backgroundColor:
-          flg ? Colors.grey[400]!.withOpacity(0.7) : Colors.blue[200],
-      onPressed: flg
-          ? null
-          : () async {
-              await _localSave();
+          hasAnswer ? Colors.blue[200] : Colors.grey[400]!.withOpacity(0.7),
+      onPressed: hasAnswer
+          ? () async {
+              await SqliteManager.localSave(needReset: true);
+
+              // リセット感を出すために、0.1秒間だけQuestionがない瞬間を作る
+              setState(() {});
+              await Future.delayed(const Duration(milliseconds: 100));
+
               await _initialize();
               // 画面の再描画
               setState(() {});
-            },
+            }
+          : null,
       child: Stack(children: [
         const Icon(Icons.autorenew),
-        if (flg)
+        if (!hasAnswer)
           Icon(
             Icons.clear,
             color: Colors.grey[350],
@@ -445,7 +448,7 @@ class _PlayViewState extends State<PlayView>
           ? Colors.blueAccent
           : const Color.fromARGB(255, 25, 25, 25);
       return Text(
-        AppData.instance.dictMap[item]!.ja,
+        appData.dictMap[item]!.ja,
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
         style: TextStyle(fontSize: 14, color: color),
@@ -479,17 +482,16 @@ class _PlayViewState extends State<PlayView>
     Widget genreDropdownButton(Function statefulBuilderSetState) {
       return DropdownButtonHideUnderline(
         child: DropdownButton2<String>(
-          value: AppData.instance.genre,
+          value: appData.genre,
           onChanged: (value) {
-            if (value != AppData.instance.genre) {
-              AppData.instance.genre = value!;
-              AppData.instance.category =
-                  AppData.instance.genreMap[AppData.instance.genre]!.first;
+            if (value != appData.genre) {
+              appData.genre = value!;
+              appData.category = appData.genreMap[appData.genre]!.first;
               statefulBuilderSetState(() {});
             }
           },
-          items: AppData.instance.genreMap.keys.map((String item) {
-            bool isSelected = (item == AppData.instance.genre);
+          items: appData.genreMap.keys.map((String item) {
+            bool isSelected = (item == appData.genre);
             return DropdownMenuItem(
                 value: item, child: buttonText(item, isSelected));
           }).toList(),
@@ -504,14 +506,13 @@ class _PlayViewState extends State<PlayView>
     Widget categoryDropdownButton(Function statefulBuilderSetState) {
       return DropdownButtonHideUnderline(
         child: DropdownButton2<String>(
-          value: AppData.instance.category,
+          value: appData.category,
           onChanged: (value) {
-            AppData.instance.category = value!;
+            appData.category = value!;
             statefulBuilderSetState(() {});
           },
-          items: AppData.instance.genreMap[AppData.instance.genre]!
-              .map((String item) {
-            bool isSelected = (item == AppData.instance.category);
+          items: appData.genreMap[appData.genre]!.map((String item) {
+            bool isSelected = (item == appData.category);
             return DropdownMenuItem(
                 value: item, child: buttonText(item, isSelected));
           }).toList(),
@@ -551,8 +552,6 @@ class _PlayViewState extends State<PlayView>
       child: Column(children: [
         StatefulBuilder(
           builder: (context, setState) => DrawerHeader(
-            // decoration: BoxDecoration(
-            //     color: CupertinoColors.systemPurple.withOpacity(0.3)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -611,14 +610,13 @@ class _PlayViewState extends State<PlayView>
                                     for (Post p in list) ...{
                                       ListTile(
                                         title: text(
-                                          AppData.instance.dictMap[p.genre]!.ja,
+                                          appData.dictMap[p.genre]!.ja,
                                           AppData
                                               .instance.dictMap[p.category]!.ja,
                                         ),
                                         onTap: () {
-                                          AppData.instance.genre = p.genre;
-                                          AppData.instance.category =
-                                              p.category;
+                                          appData.genre = p.genre;
+                                          appData.category = p.category;
                                           setState(() {});
                                           Navigator.of(context).pop();
                                         },
@@ -632,7 +630,7 @@ class _PlayViewState extends State<PlayView>
                         ),
                       );
                     } else {
-                      Post p = AppData.instance.posts.last;
+                      Post p = appData.posts.last;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -649,12 +647,12 @@ class _PlayViewState extends State<PlayView>
                           ),
                           ListTile(
                             title: text(
-                              AppData.instance.dictMap[p.genre]!.ja,
-                              AppData.instance.dictMap[p.category]!.ja,
+                              appData.dictMap[p.genre]!.ja,
+                              appData.dictMap[p.category]!.ja,
                             ),
                             onTap: () {
-                              AppData.instance.genre = p.genre;
-                              AppData.instance.category = p.category;
+                              appData.genre = p.genre;
+                              appData.category = p.category;
                               setState(() {});
                               Navigator.of(context).pop();
                             },
@@ -705,7 +703,7 @@ class _PlayViewState extends State<PlayView>
                   }),
               footerButton(
                   icon: const Icon(CupertinoIcons.flag),
-                  label: 'バグの報告',
+                  label: '報告/要望',
                   onPressed: () async {
                     bool sent = await showCupertinoDialog(
                         context: context,
@@ -725,20 +723,10 @@ class _PlayViewState extends State<PlayView>
                                     autovalidateMode:
                                         AutovalidateMode.onUserInteraction,
                                     keyboardType: TextInputType.text,
-                                    // textInputAction: TextInputAction.next,
-                                    // decoration: const InputDecoration(
-                                    //   labelText: 'バグの概要',
-                                    //   errorMaxLines: 2,
-                                    // ),
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        // return 'Name must not be null or empty.';
                                         return '入力してください。';
                                       }
-
-                                      // if (value.length > 10) {
-                                      //   return '';
-                                      // }
                                       return null;
                                     },
                                   ),
@@ -768,40 +756,10 @@ class _PlayViewState extends State<PlayView>
                         return;
                       }
 
-                      showCupertinoDialog(
-                        context: context,
-                        builder: (_) => CupertinoAlertDialog(
-                          content: const Text('ありがとうございます！！'),
-                          actions: [
-                            CupertinoDialogAction(
-                              isDefaultAction: true,
-                              onPressed: () => Navigator.of(_).pop(),
-                              child: const Text(
-                                'OK',
-                                style: TextStyle(
-                                  color: CupertinoColors.activeBlue,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                      showOkDialog(context,
+                          content: const Text('ありがとうございます！！'));
                     }
                   }),
-              // if (context.isTablet())
-              //   footerButton(
-              //     icon: Stack(children: [
-              //       const Icon(Icons.share, color: Colors.grey),
-              //       Icon(Icons.clear, color: Colors.grey[350])
-              //     ]),
-              //     label: 'シェア',
-              //     onPressed: () {
-              //       showOkDialog(
-              //         context,
-              //         content: const Text('恐れ入りますが、お使いの端末ではこちらの機能は使用できません。'),
-              //       );
-              //     },
-              //   ),
               if (!context.isTablet())
                 footerButton(
                   icon: const Icon(Icons.share),
@@ -810,19 +768,8 @@ class _PlayViewState extends State<PlayView>
                     // TODO リリースしたらホームページのリンク入れる
                     String shareText = '『アキネータークイズ』をプレイしよう!!';
                     String subject = '『アキネータークイズ』をプレイしよう!!';
-
-                    // if (Platform.isIOS && context.isTablet()) {
-                    //   final box = context.findRenderObject() as RenderBox?;
-                    //   await Share.share(
-                    //     shareText,
-                    //     subject: 'subject',
-                    //     sharePositionOrigin:
-                    //         box!.localToGlobal(Offset.zero) & box.size,
-                    //   );
-                    // } else {
                     // シェアする文章を引数で渡す
                     await Share.share(shareText, subject: subject);
-                    // }
                   },
                 ),
             ],

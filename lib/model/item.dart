@@ -2,18 +2,18 @@
 
 class Item {
   /* Fields */
-  final String scope;
+  final int level;
   final String name;
 
   /* Constructors */
   /// Default
   Item({
-    required this.scope,
+    required this.level,
     required this.name,
   });
 
   /// ItemをJsonからデコードするConstructor
   Item.fromJson(Map<String, dynamic> json)
-      : this.scope = json['scope'] as String? ?? '',
+      : this.level = json['level'] as int? ?? 1,
         this.name = json['name'] as String? ?? '';
 }

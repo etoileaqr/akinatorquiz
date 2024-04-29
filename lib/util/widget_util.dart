@@ -32,7 +32,8 @@ class WidgetUtil {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
         child: Image.asset(
-          'assets/file/test_photo.JPG',
+          // 'assets/file/test_photo.JPG',
+          'assets/file/kkrn_icon_user_3.png',
           fit: BoxFit.fill,
         ),
       ),

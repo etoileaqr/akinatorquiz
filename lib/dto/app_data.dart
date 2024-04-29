@@ -24,9 +24,11 @@ class AppData {
   Map<String, Dictionary> dictMap = {};
   Map<String, List<String>> genreMap = {};
   Map<String, Map<String, List<Item>>> itemMap = {};
-  String scope = '';
+  // String scope = '';
   String answer = '東京';
   List<Post> posts = [];
+
+  bool hasAlreadyAnswered = false;
 
   bool isOpeningSettings = false;
 
@@ -46,5 +48,23 @@ class AppData {
   bool get shouldShowAd => prefs.getBool('shouldShowAd') ?? false;
   set shouldShowAd(bool value) {
     prefs.setBool('shouldShowAd', value);
+  }
+
+  /* level */
+  int get level => prefs.getInt('level') ?? 1;
+  set level(int value) {
+    prefs.setInt('level', value);
+  }
+
+  /* isFirst */
+  bool get isFirst => prefs.getBool('isFirst') ?? true;
+  set isFirst(bool value) {
+    prefs.setBool('isFirst', value);
+  }
+
+  /* userName */
+  String get userName => prefs.getString('userName') ?? 'You';
+  set userName(String value) {
+    prefs.setString('userName', value);
   }
 }

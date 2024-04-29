@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'dart:io';
 import 'package:akinatorquiz/dto/app_data.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
@@ -16,6 +18,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 import 'manager/sqlite_manager.dart';
+import 'util/dev_util.dart';
+import 'util/file_util.dart';
 import 'view/start_up.dart';
 
 void main() async {
@@ -39,10 +43,11 @@ void main() async {
   MobileAds.instance.initialize();
 
   // 開発用
-  // List<List<String>> li = await FileUtil.loadCsv('assets/dev/cities.csv');
+  // List<List<String>> li = await FileUtil.loadCsv('assets/dev/world_cities.csv');
   // List<Content> cList = [];
-  // for (var v in li) {
-  //   Content c = Content(doc: v[0], scope: v[1], name: v[2]);
+  // for (int i = 1; i < li.length; i++) {
+  //   Content c =
+  //       Content(doc: li[i][0], level: int.parse(li[i][1]), name: li[i][2]);
   //   cList.add(c);
   // }
   // await DevUtil().insertMstToDb(

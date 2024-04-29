@@ -85,7 +85,7 @@ class DevUtil {
           .doc(docName) // 'subjects'など
           .collection(collectionName) // 'world_cities'など
           .doc(r.doc)
-          .set({'scope': r.scope, 'name': r.name});
+          .set({'level': r.level, 'name': r.name});
     }
     print(list);
   }
@@ -94,10 +94,10 @@ class DevUtil {
 class Content {
   Content({
     required this.doc,
-    required this.scope,
+    required this.level,
     required this.name,
   });
   final String doc;
-  final String scope;
+  final int level;
   final String name;
 }

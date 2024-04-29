@@ -8,7 +8,7 @@ class Post {
   int? id;
   final String genre;
   final String category;
-  final String scope;
+  final int level;
   final String answer;
   String content = '';
   final bool isChatGpt;
@@ -19,7 +19,7 @@ class Post {
   Post.chatGpt({required this.content})
       : this.genre = AppData.instance.genre,
         this.category = AppData.instance.category,
-        this.scope = AppData.instance.scope,
+        this.level = AppData.instance.level,
         this.answer = AppData.instance.answer,
         this.isChatGpt = true,
         this.postTime = DateTime.now();
@@ -28,7 +28,7 @@ class Post {
   Post.you({required this.content})
       : this.genre = AppData.instance.genre,
         this.category = AppData.instance.category,
-        this.scope = AppData.instance.scope,
+        this.level = AppData.instance.level,
         this.answer = AppData.instance.answer,
         this.isChatGpt = false,
         this.postTime = DateTime.now();
@@ -38,7 +38,7 @@ class Post {
       : this.id = json['id'] as int?,
         this.genre = json['genre'] as String? ?? '',
         this.category = json['category'] as String? ?? '',
-        this.scope = json['scope'] as String? ?? '',
+        this.level = json['level'] as int? ?? 1,
         this.answer = json['answer'] as String? ?? '',
         this.content = json['content'] as String? ?? '',
         this.isChatGpt = const BoolConverter().fromJson(json['isChatGpt']),
@@ -49,7 +49,7 @@ class Post {
         'id': this.id,
         'genre': this.genre,
         'category': this.category,
-        'scope': this.scope,
+        'level': this.level,
         'answer': this.answer,
         'content': this.content,
         'isChatGpt': const BoolConverter().toJson(this.isChatGpt),

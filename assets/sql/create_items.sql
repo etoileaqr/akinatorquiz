@@ -3,6 +3,6 @@ CREATE TABLE IF NOT EXISTS items(
     genre TEXT,
     category TEXT,
     itemId TEXT,
-    scope TEXT,
+    level INTEGER,
     name TEXT
 )
