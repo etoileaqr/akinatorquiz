@@ -36,6 +36,9 @@ class ChatGptManager {
       return null;
     } else if (AppData.instance.yourPost!.content.contains('答え')) {
       return judgeIfIsCorrect(yourPost: AppData.instance.yourPost!);
+    } else if (AppData.instance.yourPost!.content
+        .contains('${AppData.instance.answer}ですか')) {
+      return judgeIfIsCorrect(yourPost: AppData.instance.yourPost!);
     } else {
       // _data = DevUtil.getFakeChatGptResponse(yourPost: AppData.instance.yourPost!)
       //     .asBroadcastStream();
