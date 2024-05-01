@@ -32,6 +32,8 @@ class AppData {
 
   bool isOpeningSettings = false;
 
+  int unknownCount = 0;
+
   /* genre */
   String get genre => prefs.getString('genre') ?? 'subjects';
   set genre(String value) {
