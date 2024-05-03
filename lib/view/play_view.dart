@@ -107,6 +107,13 @@ class _PlayViewState extends State<PlayView>
   }
 
   Future<void> _initialize() async {
+    String qSentence = '';
+    if (context.isTablet()) {
+      qSentence = '選択したので当ててください。\nAIの都合上、答えるときは必ず 「答えは〜」で始めてください🙏';
+    } else {
+      qSentence = '選択したので当ててください。\nAIの都合上、答えるときは必ず\n「答えは〜」で始めてください🙏';
+    }
+
     appData.hasAlreadyAnswered = false;
     List<Item> tmpList = appData.itemMap[appData.genre]![appData.category]!;
     int level = appData.level;
@@ -120,14 +127,15 @@ class _PlayViewState extends State<PlayView>
     Item answerItem;
     if (appData.isFirst) {
       answerItem = Item(level: 1, name: '東京');
-      Post p = Post.chatGpt(content: '都市を' + Constants.qSentence);
+
+      Post p = Post.chatGpt(content: '都市を' + qSentence);
       SqliteManager.insertPost(post: p);
     } else {
       answerItem = targetList[Random().nextInt(targetList.length)];
     }
 
     appData.answer = answerItem.name;
-    String s = Constants.qSentence;
+    String s = qSentence;
     if (appData.dictMap.containsKey(appData.category)) {
       String jCate = appData.dictMap[appData.category]!.ja;
       jCate = jCate.replaceFirst('世界の', '');
@@ -155,11 +163,12 @@ class _PlayViewState extends State<PlayView>
   @override
   Widget build(BuildContext context) {
     // アイコンのサイズ
-    double r = 30;
+    double r = context.isTablet() ? 36 : 30;
     double textWidth = MediaQuery.of(context).size.width * 0.8;
-    TextStyle hStyle =
-        const TextStyle(fontSize: 18, fontWeight: FontWeight.w500);
-    TextStyle cStyle = const TextStyle(fontSize: 16, height: 1.6);
+    TextStyle hStyle = TextStyle(
+        fontSize: context.isTablet() ? 22 : 18, fontWeight: FontWeight.w500);
+    TextStyle cStyle =
+        TextStyle(fontSize: context.isTablet() ? 20 : 16, height: 1.6);
 
     // 1回の質問or解答のタイル
     Widget postTile({required bool isChatGpt, required String message}) {
@@ -353,22 +362,13 @@ class _PlayViewState extends State<PlayView>
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          FloatingActionButton(
-            heroTag: 'hero1',
-            shape: const CircleBorder(),
-            foregroundColor: Colors.black,
-            backgroundColor: Colors.grey[200],
-            onPressed: () {
-              _key.currentState!.openDrawer();
-            },
-            child: const Icon(CupertinoIcons.list_bullet),
-          ),
-          const SizedBox(
-            height: 7,
+          _ListBulletButton(),
+          SizedBox(
+            height: context.isTablet() ? 20 : 7,
           ),
           _LevelChangeButton(),
-          const SizedBox(
-            height: 3,
+          SizedBox(
+            height: context.isTablet() ? 13 : 3,
           ),
           _FloatingActionButton(),
         ],
@@ -443,12 +443,39 @@ class _PlayViewState extends State<PlayView>
     return optionList;
   }
 
+  FloatingActionButton _ListBulletButton() {
+    if (context.isTablet()) {
+      return FloatingActionButton.large(
+        heroTag: 'hero1',
+        shape: const CircleBorder(),
+        foregroundColor: Colors.black,
+        backgroundColor: Colors.grey[200],
+        onPressed: () {
+          _key.currentState!.openDrawer();
+        },
+        child: const Icon(CupertinoIcons.list_bullet),
+      );
+    } else {
+      return FloatingActionButton(
+        heroTag: 'hero1',
+        shape: const CircleBorder(),
+        foregroundColor: Colors.black,
+        backgroundColor: Colors.grey[200],
+        onPressed: () {
+          _key.currentState!.openDrawer();
+        },
+        child: const Icon(CupertinoIcons.list_bullet),
+      );
+    }
+  }
+
   FloatingActionButton _LevelChangeButton() {
     final record = CommonUtil.getLabelAndColor();
     String label = record.label;
     Color color = record.color;
 
-    return FloatingActionButton.small(
+    return FloatingActionButton(
+      mini: !context.isTablet(),
       heroTag: 'hero2',
       shape: const CircleBorder(),
       backgroundColor: color,
@@ -474,7 +501,10 @@ class _PlayViewState extends State<PlayView>
         // 画面の再描画
         setState(() {});
       },
-      child: Text(label),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: context.isTablet() ? 22 : 14),
+      ),
     );
   }
 
@@ -483,7 +513,8 @@ class _PlayViewState extends State<PlayView>
     if (appData.posts.length > 1) {
       hasAnswer = true;
     }
-    return FloatingActionButton.small(
+    return FloatingActionButton(
+      mini: !context.isTablet(),
       heroTag: 'hero3',
       shape: const CircleBorder(),
       foregroundColor: hasAnswer ? Colors.black : Colors.grey[350],

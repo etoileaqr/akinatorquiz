@@ -39,7 +39,7 @@ class AdmobInitPage extends HookWidget with MyDialog {
                   height: h,
                   child: FittedBox(
                     fit: BoxFit.contain,
-                    child: Image.asset('assets/file/att_dlg.PNG'),
+                    child: Image.asset('assets/file/att_dlg2.PNG'),
                   ),
                 ),
                 SizedBox(
