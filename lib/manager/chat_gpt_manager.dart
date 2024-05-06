@@ -48,6 +48,7 @@ class ChatGptManager {
 
       String cate = AppData.instance.dictMap[AppData.instance.category]!.ja;
       String sss = 'その' + cate;
+      sss = sss.replaceFirst('その世界の都市', 'その都市');
 
       try {
         String question = '';

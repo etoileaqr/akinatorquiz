@@ -162,6 +162,9 @@ class _PlayViewState extends State<PlayView>
 
   @override
   Widget build(BuildContext context) {
+    if (kDebugMode) {
+      print('画面全体に描画処理が走りました');
+    }
     // アイコンのサイズ
     double r = context.isTablet() ? 36 : 30;
     double textWidth = MediaQuery.of(context).size.width * 0.8;
@@ -220,20 +223,20 @@ class _PlayViewState extends State<PlayView>
           child: Scaffold(
             key: _key,
             body: SafeArea(
-              child: Consumer<StateController>(builder: (context, ctrl, child) {
-                // 最終行までスクロールする
-                _goToLast();
-
-                return Column(children: [
-                  // 広告Widget
-                  Container(
-                    width: 320,
-                    height: 50,
-                    margin: const EdgeInsets.only(bottom: 10),
-                    child: AdWidget(ad: BannerAdManager().bannerAd),
-                  ),
-                  Expanded(
-                    child: Scrollbar(
+                child: Column(children: [
+              // 広告Widget
+              Container(
+                width: 320,
+                height: 50,
+                margin: const EdgeInsets.only(bottom: 10),
+                child: AdWidget(ad: BannerAdManager().bannerAd),
+              ),
+              Expanded(
+                child: Consumer<StateController>(
+                  builder: (context, ctrl, child) {
+                    _goToLast();
+                    // print('描画処理');
+                    return Scrollbar(
                       // Scrollbar側にもcontrollerを設定する必要あり
                       controller: _scrollController,
                       child: SingleChildScrollView(
@@ -244,6 +247,8 @@ class _PlayViewState extends State<PlayView>
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
+                              // _goToLast();
+
                               if (snapshot.hasData) {
                                 // 取得が終わってから格納する
                                 // 何度も追加してしまわないように、フラグを見る
@@ -264,7 +269,8 @@ class _PlayViewState extends State<PlayView>
                               }
                             } else if (snapshot.connectionState !=
                                 ConnectionState.none) {
-                              _goToLast();
+                              // print('test');
+                              // _goToLast();
                               return Column(children: [
                                 for (Post p in appData.posts)
                                   postTile(
@@ -314,15 +320,15 @@ class _PlayViewState extends State<PlayView>
                           },
                         ),
                       ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.only(top: 10, bottom: 10),
-                    child: TextInputWidget(getFuture: _getFuture),
-                  ),
-                ]);
-              }),
-            ),
+                    );
+                  },
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.only(top: 10, bottom: 10),
+                child: TextInputWidget(getFuture: _getFuture),
+              ),
+            ])),
 
             drawer: _Drawer(),
             onDrawerChanged: (whenOpen) async {
