@@ -1,5 +1,6 @@
 // ignore_for_file: non_constant_identifier_names, prefer_interpolation_to_compose_strings
 
+import 'dart:io';
 import 'dart:math';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/cupertino.dart';
@@ -175,6 +176,13 @@ class _PlayViewState extends State<PlayView>
 
     // 1回の質問or解答のタイル
     Widget postTile({required bool isChatGpt, required String message}) {
+      // Androidでは「ChatGPT」という文言が使えないので・・
+      String chatGptName = '';
+      if (Platform.isAndroid) {
+        chatGptName = 'ChatAI';
+      } else {
+        chatGptName = Constants.CHAT_GPT;
+      }
       return Container(
         margin: const EdgeInsets.only(bottom: 20),
         child: Row(
@@ -192,7 +200,7 @@ class _PlayViewState extends State<PlayView>
                 children: [
                   // 名前
                   Text(
-                    isChatGpt ? Constants.CHAT_GPT : appData.userName,
+                    isChatGpt ? chatGptName : appData.userName,
                     style: hStyle,
                   ),
                   // content
