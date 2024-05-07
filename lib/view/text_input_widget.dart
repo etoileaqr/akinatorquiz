@@ -1,6 +1,5 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'package:akinatorquiz/view/my_dialog.dart';
 // import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -12,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../dto/app_data.dart';
 import '../model/post.dart';
 import 'play_view.dart';
+import 'my_dialog.dart';
 
 /// TextFormField側のウィジェット
 // 画面全体を再描画しないように分ける
@@ -22,6 +22,7 @@ class TextInputWidget extends HookWidget with MyDialog {
 
   @override
   Widget build(BuildContext context) {
+    // print('textFieldの再描画');
     // SpeechToText speechToText = SpeechToText();
     // final speechEnabled = useState<bool>(false);
     // final lastWords = useState<String>('');
@@ -126,9 +127,13 @@ class TextInputWidget extends HookWidget with MyDialog {
             onChanged: (value) {
               // 空文字以外なら送信可能とする
               if (value.isEmpty) {
-                canSend.value = false;
+                if (canSend.value) {
+                  canSend.value = false;
+                }
               } else {
-                canSend.value = true;
+                if (!canSend.value) {
+                  canSend.value = true;
+                }
               }
             },
             controller: controller,
@@ -166,12 +171,11 @@ class TextInputWidget extends HookWidget with MyDialog {
           height: 40,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: controller.text.isEmpty ? Colors.grey[400] : Colors.black,
+            color: canSend.value ? Colors.black : Colors.grey[400],
           ),
           child: IconButton(
-            onPressed: controller.text.isEmpty
-                ? null
-                : () {
+            onPressed: canSend.value
+                ? () {
                     // 質問のインスタンスを生成し、dtoに格納
                     Post yourPost = Post.you(content: controller.text);
                     AppData.instance.yourPost = yourPost;
@@ -188,7 +192,8 @@ class TextInputWidget extends HookWidget with MyDialog {
                     getFuture();
                     // setStateNotifierを呼び出す
                     context.read<StateController>().setStateNotify();
-                  },
+                  }
+                : null,
             icon: const Icon(
               Icons.arrow_upward,
               color: Colors.white,

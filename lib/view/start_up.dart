@@ -1,5 +1,3 @@
-import 'package:akinatorquiz/model/typo.dart';
-import 'package:akinatorquiz/view/admob_init_page.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -11,9 +9,11 @@ import '../dto/app_data.dart';
 import '../main.dart';
 import '../manager/firestore_manager.dart';
 import '../manager/sqlite_manager.dart';
+import '../model/typo.dart';
 import '../model/version.dart';
 import '../my_exception.dart';
 import '../util/connection_util.dart';
+import 'admob_init_page.dart';
 import 'play_view.dart';
 
 Stream<double> fetchMstFromFirestore() async* {
@@ -137,10 +137,12 @@ class StartUp extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final func = useMemoized(fetchMstFromFirestore);
+    // print('びょうが');
+    final func = useMemoized(() => fetchMstFromFirestore());
     final snapshot = useStream(func, initialData: null);
 
     if (snapshot.connectionState == ConnectionState.done) {
+      // print('ts');
       if (snapshot.hasData) {
         // ATT未設定かどうかチェック
         // final status = await AppTrackingTransparency
@@ -217,6 +219,7 @@ class StartUp extends HookWidget {
         );
       }
     } else if (snapshot.connectionState == ConnectionState.active) {
+      // print('ta');
       if (snapshot.hasData) {
         double value = snapshot.data!;
         return Scaffold(
@@ -240,6 +243,7 @@ class StartUp extends HookWidget {
         );
       }
     } else {
+      // print('t');
       return const Scaffold(
         body: Center(
           child: CupertinoActivityIndicator(),

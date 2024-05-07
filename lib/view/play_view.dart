@@ -48,8 +48,10 @@ class _PlayViewState extends State<PlayView>
   AppOpenAdManager appOpenAdManager = AppOpenAdManager();
   Future<List<Post>>? _localData;
   Future<String?>? _future;
-  TextEditingController nameController = TextEditingController();
+  // TextEditingController nameController = TextEditingController();
   AppData appData = AppData();
+
+  String _nameText = '';
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
@@ -85,7 +87,7 @@ class _PlayViewState extends State<PlayView>
     WidgetsBinding.instance.removeObserver(this);
     // _animationController.dispose();
     _scrollController.dispose();
-    nameController.dispose();
+    // nameController.dispose();
     appOpenAdManager.dispose();
     super.dispose();
   }
@@ -559,7 +561,7 @@ class _PlayViewState extends State<PlayView>
   }
 
   Drawer _Drawer() {
-    double dropdownButtonWidth = MediaQuery.of(context).size.width * 0.4;
+    double dropdownButtonWidth = MediaQuery.of(context).size.width * 0.35;
 
     Widget buttonText(String item, bool isSelected) {
       Color color = isSelected
@@ -835,7 +837,8 @@ class _PlayViewState extends State<PlayView>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   TextFormField(
-                                    controller: nameController,
+                                    // controller: nameController,
+                                    initialValue: _nameText,
                                     maxLength: 30,
                                     maxLines: 1,
                                     autovalidateMode:
@@ -847,6 +850,9 @@ class _PlayViewState extends State<PlayView>
                                       }
                                       return null;
                                     },
+                                    onChanged: (value) {
+                                      _nameText = value;
+                                    },
                                   ),
                                 ],
                               ),
@@ -855,7 +861,7 @@ class _PlayViewState extends State<PlayView>
                             cancelAction: () {},
                             defaultActionText: '送信',
                             action: () async {
-                              String content = nameController.text;
+                              String content = _nameText;
                               try {
                                 await FirestoreManager.insertBugToDb(
                                     content: content);
@@ -869,7 +875,8 @@ class _PlayViewState extends State<PlayView>
                         });
                     if (sent) {
                       await Future.delayed(const Duration(milliseconds: 200));
-                      nameController.clear();
+                      // nameController.clear();
+                      _nameText = '';
                       if (!mounted) {
                         return;
                       }
